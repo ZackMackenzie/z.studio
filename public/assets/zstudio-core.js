@@ -778,6 +778,36 @@
     }
   }
 
+  // On project detail pages, the "Mais projetos" block repeats the same
+  // related-project cards already shown throughout the site. Per request,
+  // strip it down to just the "Ver todos os projetos" link, centered, and
+  // drop the heading + preview cards entirely.
+  function simplifyMoreProjectsSection() {
+    const headings = Array.from(document.querySelectorAll("h1, h2, h3, p, span, div")).filter(el => {
+      if (el.children.length > 0) return false;
+      const t = (el.textContent || "").trim().toLowerCase();
+      return t === "mais projetos" || t === "more projects" || t === "más proyectos";
+    });
+
+    headings.forEach(heading => {
+      const section = heading.closest("section") || heading.closest(".framer-1ngrvxa, .framer-12cxqdm");
+      if (!section || !section.isConnected) return;
+
+      const btn = Array.from(section.querySelectorAll("a, button")).find(el => {
+        const t = (el.textContent || "").trim().toLowerCase();
+        return t.includes("ver todos os projetos") || t.includes("view all projects") || t.includes("ver todos los proyectos");
+      });
+
+      if (btn) {
+        while (section.firstChild) section.removeChild(section.firstChild);
+        section.appendChild(btn);
+        section.classList.add("zstudio-more-projects-cta");
+      } else {
+        section.remove();
+      }
+    });
+  }
+
   // Standardize internal URLs: canonical routes without trailing slashes
   function canonicalizeInternalLinks() {
     document.querySelectorAll("a[href]").forEach(a => {
@@ -944,10 +974,24 @@
           flex-direction: row !important;
           align-items: center !important;
           gap: 14px !important;
-          margin-left: auto !important;
           flex-shrink: 0 !important;
           position: relative !important;
           z-index: 50 !important;
+        }
+
+        /*
+         * Wraps the CTA pill + our injected location/switcher as a single
+         * flex item, so the navbar row (.framer-1o5g5u1, which distributes
+         * its DIRECT children with justify-content: space-between) still
+         * only sees the original number of top-level children. Appending
+         * rightGroup as a bare extra sibling there added a 4th child and
+         * visibly skewed/uncentered the whole header row.
+         */
+        .zstudio-nav-cta-group {
+          display: inline-flex !important;
+          align-items: center !important;
+          gap: 14px !important;
+          flex-shrink: 0 !important;
         }
 
         .zstudio-nav-location {
@@ -1018,15 +1062,59 @@
          * fixed-height box (framer-nkianr, data-framer-name="Content") that
          * clips with overflow:clip. On the fonts this exports with, the text
          * is a couple of px taller than that box, so descenders/accents get
-         * cut off. Let the box grow instead of clipping.
+         * cut off. Let the box grow instead of clipping. The tablet/mobile
+         * breakpoint bakes an even tighter box (43px, zero vertical padding
+         * vs desktop's 3px), which clips worse — min-height/padding here are
+         * intentionally more generous than the baked desktop value so every
+         * breakpoint has headroom.
          */
         .framer-nkianr {
           height: auto !important;
-          min-height: 49px !important;
+          min-height: 56px !important;
           overflow: visible !important;
+          padding-top: 8px !important;
+          padding-bottom: 8px !important;
         }
         .framer-14o4nkg {
           height: auto !important;
+          overflow: visible !important;
+        }
+
+        /*
+         * Project photos (mockup/cover images bound from the CMS, rendered
+         * client-side into Backdrop layers) must be shown in full, never
+         * cropped. Framer's default "Backdrop" fill uses cover/crop sizing;
+         * force it to fit the whole image inside its frame instead.
+         */
+        [data-framer-name="Backdrop"] {
+          background-size: contain !important;
+          background-repeat: no-repeat !important;
+          background-position: center !important;
+        }
+        [data-framer-name="Backdrop"] img {
+          object-fit: contain !important;
+        }
+
+        /*
+         * /projects lists 4 real project cards plus a "view all" tile in a
+         * 2-column grid (grid-template-columns: repeat(2, ...)) — 5 items is
+         * odd for 2 columns, so the last row has one card and a dangling
+         * empty cell to its right. Span the "view all" tile (the only grid
+         * card whose link points back at /projects) across both columns so
+         * it fills that row instead of leaving a gap.
+         */
+        a[href="/projects"]:has(> [data-framer-name="Project Card"]) {
+          grid-column: 1 / -1 !important;
+          justify-self: center !important;
+        }
+
+        /* Simplified "Mais projetos" block: just the centered CTA link */
+        .zstudio-more-projects-cta {
+          display: flex !important;
+          justify-content: center !important;
+          align-items: center !important;
+          width: 100% !important;
+          padding: 32px 0 !important;
         }
 
         @media (max-width: 600px) {
@@ -1071,7 +1159,28 @@
 
         rightGroup.appendChild(loc);
         rightGroup.appendChild(switcher);
-        container.appendChild(rightGroup);
+
+        // The navbar row (.framer-1o5g5u1) uses justify-content: space-between
+        // across its direct children to lay out [Logo] [Nav] [CTA pill]. Simply
+        // appending rightGroup here would add a 4th top-level flex child, which
+        // shifts the space-between math and visibly skews/uncenters the whole
+        // row. Instead, find the CTA pill's own top-level child of `container`
+        // and group it together with rightGroup inside one wrapper, so the row
+        // still only has 3 top-level children and keeps its original spacing.
+        const ctaPill = container.querySelector(".framer-9nc42h");
+        let ctaTopChild = ctaPill;
+        while (ctaTopChild && ctaTopChild.parentElement && ctaTopChild.parentElement !== container) {
+          ctaTopChild = ctaTopChild.parentElement;
+        }
+        if (ctaTopChild && ctaTopChild.parentElement === container) {
+          const group = document.createElement("div");
+          group.className = "zstudio-nav-cta-group";
+          ctaTopChild.parentElement.insertBefore(group, ctaTopChild);
+          group.appendChild(ctaTopChild);
+          group.appendChild(rightGroup);
+        } else {
+          container.appendChild(rightGroup);
+        }
       } else {
         // Ensure switcher is present
         if (!rightGroup.querySelector(".zstudio-lang-switcher")) {
@@ -1326,6 +1435,7 @@
   function init() {
     removeLocationAndTime();
     cleanupStructuralDuplicates();
+    simplifyMoreProjectsSection();
     canonicalizeInternalLinks();
     injectLanguageSwitcher();
     applyTranslations();
@@ -1341,6 +1451,7 @@
       debounceTimer = setTimeout(() => {
         removeLocationAndTime();
         cleanupStructuralDuplicates();
+        simplifyMoreProjectsSection();
         canonicalizeInternalLinks();
         injectLanguageSwitcher();
         applyTranslations();
