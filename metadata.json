@@ -1,0 +1,6 @@
+{
+  "name": "Asher Vale",
+  "description": "Z.studio - Design, tecnologia e desenvolvimento para transformar negócios com soluções digitais sob medida.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
