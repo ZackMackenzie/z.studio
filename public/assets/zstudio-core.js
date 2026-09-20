@@ -627,7 +627,7 @@
         text === "começar um projeto" ||
         text === "start chat on whatsapp";
 
-      if (isContactCTA && !el.closest("#zstudio-lang-switcher")) {
+      if (isContactCTA && !el.closest("#zstudio-lang-switcher") && !el.closest("form") && !el.closest(".framer-1o4ffb9") && !el.closest(".framer-qu44xm") && !el.closest(".framer-al9wyy-container")) {
         const context = getPageContext();
         const url = getWhatsAppUrl(context);
 
@@ -808,94 +808,9 @@
   }
 
   function injectContactWhatsAppCard() {
-    // Only on /contact page
-    if (!window.location.pathname.includes("contact")) return;
-    if (document.getElementById("zstudio-contact-wa-card")) return;
-
-    // Find main container or form
-    const form = document.querySelector("form");
-    const targetParent = form ? form.parentElement : document.querySelector("#main");
-    if (!targetParent) return;
-
-    const lang = getActiveLang();
-    const waUrl = getWhatsAppUrl("general");
-
-    const titles = {
-      pt: "Conversar no WhatsApp",
-      en: "Chat on WhatsApp",
-      es: "Chatear por WhatsApp"
-    };
-    const subtitles = {
-      pt: "Canal direto e rápido para novos projetos • +55 11 91440-6822",
-      en: "Direct and fast channel for new projects • +55 11 91440-6822",
-      es: "Canal directo y rápido para nuevos proyectos • +55 11 91440-6822"
-    };
-    const btnTexts = {
-      pt: "Iniciar conversa no WhatsApp",
-      en: "Start chat on WhatsApp",
-      es: "Iniciar chat en WhatsApp"
-    };
-
-    const card = document.createElement("div");
-    card.id = "zstudio-contact-wa-card";
-    card.style.cssText = `
-      width: 100%;
-      max-width: 600px;
-      margin: 0 auto 32px auto;
-      padding: 24px;
-      background: rgba(18, 18, 18, 0.9);
-      border: 1px solid rgba(71, 197, 84, 0.35);
-      border-radius: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
-      backdrop-filter: blur(12px);
-      box-sizing: border-box;
-      position: relative;
-      z-index: 10;
-    `;
-
-    card.innerHTML = `
-      <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
-        <div style="display: flex; align-items: center; gap: 10px;">
-          <div style="width: 10px; height: 10px; border-radius: 50%; background: #47c554; box-shadow: 0 0 10px #47c554;"></div>
-          <span style="color: #ffffff; font-size: 16px; font-weight: 600; font-family: 'Inter', sans-serif;">${titles[lang]}</span>
-        </div>
-        <span style="color: #47c554; font-size: 12px; font-weight: 500; font-family: 'Inter', sans-serif; background: rgba(71, 197, 84, 0.12); padding: 3px 10px; border-radius: 9999px;">Online</span>
-      </div>
-      <p style="color: rgba(255, 255, 255, 0.65); font-size: 13px; line-height: 1.5; margin: 0; font-family: 'Inter', sans-serif;">
-        ${subtitles[lang]}
-      </p>
-      <a id="zstudio-contact-wa-btn" href="${waUrl}" target="_blank" rel="noopener noreferrer" style="
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        background: #25D366;
-        color: #050505;
-        font-weight: 600;
-        font-size: 14px;
-        font-family: 'Inter', sans-serif;
-        padding: 12px 20px;
-        border-radius: 9999px;
-        text-decoration: none;
-        transition: transform 0.2s ease, background-color 0.2s ease;
-        margin-top: 4px;
-        box-shadow: 0 4px 14px rgba(37, 211, 102, 0.35);
-      ">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2m.01 1.67c2.2 0 4.26.86 5.82 2.42a8.225 8.225 0 0 1 2.41 5.83c0 4.54-3.7 8.24-8.24 8.24-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.196 8.196 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.24-8.24m4.52 11.66c-.25-.13-1.47-.72-1.7-.81-.23-.08-.39-.13-.56.13-.17.25-.64.81-.79.98-.14.17-.29.19-.54.06-.25-.13-1.06-.39-2.03-1.24-.75-.67-1.26-1.5-1.41-1.75-.15-.25-.02-.39.11-.51.11-.11.25-.29.37-.44.13-.15.17-.25.25-.42.08-.17.04-.32-.02-.45s-.56-1.35-.77-1.85c-.2-.48-.41-.42-.56-.43h-.48c-.17 0-.45.06-.68.32-.23.25-.89.87-.89 2.12s.91 2.46 1.04 2.63c.13.17 1.79 2.73 4.33 3.83.61.26 1.08.42 1.45.54.61.19 1.16.17 1.6.1.49-.07 1.47-.6 1.68-1.18.21-.58.21-1.08.15-1.18-.06-.1-.22-.16-.47-.28z"/>
-        </svg>
-        <span>${btnTexts[lang]}</span>
-      </a>
-    `;
-
-    if (form) {
-      form.parentNode.insertBefore(card, form);
-    } else {
-      targetParent.prepend(card);
-    }
+    // User requested to remove WhatsApp button/card from /contact page to not interfere with form inputs
+    const existing = document.getElementById("zstudio-contact-wa-card");
+    if (existing) existing.remove();
   }
 
   function createLanguageSwitcherElement(variant) {
@@ -905,24 +820,19 @@
     switcher.style.cssText = `
       display: inline-flex !important;
       align-items: center !important;
-      gap: 3px !important;
-      padding: 3px 5px !important;
-      background: rgba(15, 15, 15, 0.85) !important;
+      gap: 2px !important;
+      padding: 3px 4px !important;
+      background: rgba(18, 18, 18, 0.88) !important;
       backdrop-filter: blur(20px) !important;
       -webkit-backdrop-filter: blur(20px) !important;
-      border: 1px solid rgba(255, 255, 255, 0.12) !important;
+      border: 1px solid rgba(255, 255, 255, 0.14) !important;
       border-radius: 9999px !important;
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5) !important;
       user-select: none !important;
-      transition: opacity 0.3s ease !important;
       position: relative !important;
-      top: auto !important;
-      right: auto !important;
-      left: auto !important;
-      bottom: auto !important;
-      margin: 0 !important;
       flex-shrink: 0 !important;
-      z-index: 10 !important;
+      z-index: 50 !important;
+      line-height: 1 !important;
     `;
 
     const langs = [
@@ -942,30 +852,31 @@
       const isActive = l.code === currentLang;
       btn.style.cssText = `
         border: none !important;
-        background: ${isActive ? "rgba(255, 255, 255, 0.18)" : "transparent"} !important;
-        color: ${isActive ? "#ffffff" : "rgba(255, 255, 255, 0.55)"} !important;
+        background: ${isActive ? "rgba(255, 255, 255, 0.22)" : "transparent"} !important;
+        color: ${isActive ? "#ffffff" : "rgba(255, 255, 255, 0.6)"} !important;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
         font-size: 11px !important;
         font-weight: ${isActive ? "600" : "500"} !important;
-        padding: 4px 8px !important;
+        padding: 4px 7px !important;
         border-radius: 9999px !important;
         cursor: pointer !important;
         line-height: 1 !important;
         transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
-        letter-spacing: 0.04em !important;
+        letter-spacing: 0.03em !important;
         outline: none !important;
+        white-space: nowrap !important;
       `;
 
       btn.addEventListener("mouseenter", () => {
         if (btn.getAttribute("data-lang-code") !== getActiveLang()) {
           btn.style.color = "#ffffff";
-          btn.style.background = "rgba(255, 255, 255, 0.08)";
+          btn.style.background = "rgba(255, 255, 255, 0.1)";
         }
       });
 
       btn.addEventListener("mouseleave", () => {
         if (btn.getAttribute("data-lang-code") !== getActiveLang()) {
-          btn.style.color = "rgba(255, 255, 255, 0.55)";
+          btn.style.color = "rgba(255, 255, 255, 0.6)";
           btn.style.background = "transparent";
         }
       });
@@ -983,107 +894,181 @@
   }
 
   function injectLanguageSwitcher() {
-    // 1. Clean up any legacy or fixed switchers that covered São Paulo, SP
-    document.querySelectorAll("#zstudio-lang-switcher").forEach(el => {
-      if (el.parentElement === document.body) {
-        el.remove();
-      }
-    });
-
-    // 2. Ensure CSS layout guarantees are present
+    // 1. Ensure global CSS guarantees
     if (!document.getElementById("zstudio-nav-style")) {
       const style = document.createElement("style");
       style.id = "zstudio-nav-style";
       style.textContent = `
-        .framer-tw1Xs .framer-1j95pa0,
+        /* Always force black background on html and body */
+        html, body {
+          background: #000000 !important;
+          background-color: #000000 !important;
+        }
+
+        /* Hide unwanted badge overlay and Framer branding */
+        #template-overlay, #__framer-badge-container, .__framer-badge {
+          display: none !important;
+        }
+
+        /* Hide contact WhatsApp card if rendered */
+        #zstudio-contact-wa-card {
+          display: none !important;
+        }
+
+        /* Hide Framer's overlapping Time container */
+        .framer-1j95pa0,
         [data-framer-name="Time"] {
+          display: none !important;
+        }
+
+        /* Navbar container flex row */
+        .framer-1o5g5u1 {
+          display: flex !important;
+          align-items: center !important;
+          justify-content: space-between !important;
+          width: 100% !important;
+          position: relative !important;
+        }
+
+        /* Dedicated container for location + switcher side-by-side */
+        .zstudio-nav-right {
           display: inline-flex !important;
           flex-direction: row !important;
           align-items: center !important;
           gap: 14px !important;
-          width: auto !important;
-          height: auto !important;
-          position: relative !important;
-          overflow: visible !important;
-        }
-        .framer-tw1Xs .framer-1j95pa0 .framer-i36h5s,
-        [data-framer-name="Time"] .framer-i36h5s {
-          white-space: nowrap !important;
-          display: inline-block !important;
-          width: auto !important;
-          height: auto !important;
-          position: relative !important;
-        }
-        .framer-tw1Xs.framer-v-fwxqem .framer-1o5g5u1,
-        [data-framer-name="Mobile"] .framer-1o5g5u1 {
-          display: flex !important;
-          justify-content: space-between !important;
-          align-items: center !important;
-          padding: 0 16px !important;
-        }
-        .zstudio-lang-switcher {
-          display: inline-flex !important;
-          align-items: center !important;
-          gap: 3px !important;
-          padding: 3px 5px !important;
-          background: rgba(15, 15, 15, 0.85) !important;
-          backdrop-filter: blur(20px) !important;
-          -webkit-backdrop-filter: blur(20px) !important;
-          border: 1px solid rgba(255, 255, 255, 0.12) !important;
-          border-radius: 9999px !important;
-          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5) !important;
-          user-select: none !important;
-          position: relative !important;
-          top: auto !important;
-          right: auto !important;
-          margin: 0 !important;
+          margin-left: auto !important;
           flex-shrink: 0 !important;
-          z-index: 10 !important;
+          position: relative !important;
+          z-index: 50 !important;
+        }
+
+        .zstudio-nav-location {
+          color: #ffffff !important;
+          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+          font-size: 13px !important;
+          font-weight: 500 !important;
+          white-space: nowrap !important;
+          letter-spacing: -0.01em !important;
+          line-height: 1 !important;
+          user-select: none !important;
+          display: inline-block !important;
+        }
+
+        /* Force black background on projects bottom bands and layout elements across desktop, tablet, and mobile */
+        html, body {
+          background-color: #000000 !important;
+          background: #000000 !important;
+          overscroll-behavior-y: none !important;
+        }
+
+        /*
+         * The bottom white bands come from Lenis (framer-1kfxmrd-container and
+         * framer-bsobv0-container, two separate "Lenis・Smooth Scroll" component
+         * instances on this page) rubber-banding past the end of its virtual
+         * scroll content on touch devices, which briefly exposes the native
+         * <html>/<body> background beneath. overscroll-behavior-y stops the
+         * bounce; these background-color rules cover the gap in case a browser
+         * ignores it (older Safari).
+         */
+        html {
+          background-color: #000000 !important;
+          height: 100% !important;
+        }
+        #main,
+        .framer-1kfxmrd-container,
+        .framer-bsobv0-container {
+          background-color: #000000 !important;
+        }
+        .framer-15zqc7h,
+        .framer-jg6vfd,
+        .framer-9vBJm,
+        .framer-evEMj,
+        .framer-16znbqb-container,
+        .framer-syrbsj-container,
+        #overlay,
+        #template-overlay {
+          background-color: #000000 !important;
+        }
+
+        /* Contact Form Feedback & Error Styles */
+        #zstudio-form-feedback {
+          width: 100% !important;
+          text-align: center !important;
+          padding: 8px 4px !important;
+          margin-bottom: 8px !important;
+          min-height: 24px !important;
+          display: block !important;
+          transition: all 0.2s ease !important;
+        }
+        .zstudio-field-error {
+          border: 1px solid rgba(239, 68, 68, 0.9) !important;
+          box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.25) !important;
+        }
+
+        @media (max-width: 600px) {
+          .zstudio-nav-right {
+            gap: 8px !important;
+          }
+          .zstudio-nav-location {
+            font-size: 11px !important;
+          }
+          .zstudio-lang-switcher {
+            padding: 2px 3px !important;
+            gap: 1px !important;
+          }
+          .zstudio-lang-switcher button {
+            font-size: 10px !important;
+            padding: 3px 5px !important;
+          }
         }
       `;
       document.head.appendChild(style);
     }
 
-    // 3. Desktop / Tablet Navbar: attach inside or next to São Paulo, SP in .framer-1j95pa0
-    const timeContainers = document.querySelectorAll(".framer-1j95pa0, [data-framer-name=\"Time\"]");
-    timeContainers.forEach(container => {
-      container.style.display = "inline-flex";
-      container.style.flexDirection = "row";
-      container.style.alignItems = "center";
-      container.style.gap = "14px";
-      container.style.position = "relative";
-      container.style.overflow = "visible";
-
-      if (!container.querySelector(".zstudio-lang-switcher")) {
-        const switcher = createLanguageSwitcherElement("desktop");
-        container.appendChild(switcher);
+    // 2. Hide any legacy/floating elements
+    document.querySelectorAll("#zstudio-lang-switcher, #zstudio-lang-switcher-fallback").forEach(el => {
+      if (el.parentElement === document.body) {
+        el.remove();
       }
     });
 
-    // 4. Mobile Navbar: attach inside .framer-1o5g5u1 on the right
-    const mobileNavContainers = document.querySelectorAll(".framer-tw1Xs.framer-v-fwxqem .framer-1o5g5u1, [data-framer-name=\"Mobile\"] .framer-1o5g5u1");
-    mobileNavContainers.forEach(mContainer => {
-      mContainer.style.display = "flex";
-      mContainer.style.justifyContent = "space-between";
-      mContainer.style.alignItems = "center";
+    // 3. Inject side-by-side location and language switcher in all navbar containers
+    const navContainers = document.querySelectorAll(".framer-1o5g5u1");
+    navContainers.forEach(container => {
+      let rightGroup = container.querySelector(".zstudio-nav-right");
+      if (!rightGroup) {
+        rightGroup = document.createElement("div");
+        rightGroup.className = "zstudio-nav-right";
 
-      if (!mContainer.querySelector(".zstudio-lang-switcher")) {
-        const switcher = createLanguageSwitcherElement("mobile");
-        mContainer.appendChild(switcher);
+        const loc = document.createElement("span");
+        loc.className = "zstudio-nav-location";
+        loc.textContent = "São Paulo, SP";
+
+        const switcher = createLanguageSwitcherElement("header");
+
+        rightGroup.appendChild(loc);
+        rightGroup.appendChild(switcher);
+        container.appendChild(rightGroup);
+      } else {
+        // Ensure switcher is present
+        if (!rightGroup.querySelector(".zstudio-lang-switcher")) {
+          const switcher = createLanguageSwitcherElement("header");
+          rightGroup.appendChild(switcher);
+        }
+        // Ensure location text is present
+        if (!rightGroup.querySelector(".zstudio-nav-location")) {
+          const loc = document.createElement("span");
+          loc.className = "zstudio-nav-location";
+          loc.textContent = "São Paulo, SP";
+          rightGroup.insertBefore(loc, rightGroup.firstChild);
+        }
       }
     });
 
-    // 5. Fallback: only if no navbar container is found anywhere in the DOM
-    const hasAnySwitcher = document.querySelector(".zstudio-lang-switcher");
-    if (!hasAnySwitcher) {
-      const fallbackSwitcher = createLanguageSwitcherElement("fallback");
-      fallbackSwitcher.id = "zstudio-lang-switcher-fallback";
-      fallbackSwitcher.style.position = "fixed";
-      fallbackSwitcher.style.bottom = "24px";
-      fallbackSwitcher.style.right = "24px";
-      fallbackSwitcher.style.zIndex = "999999";
-      document.body.appendChild(fallbackSwitcher);
-    }
+    // 4. Ensure old .framer-1j95pa0 is hidden
+    document.querySelectorAll(".framer-1j95pa0, [data-framer-name=\"Time\"]").forEach(el => {
+      el.style.setProperty("display", "none", "important");
+    });
   }
 
   function updateSwitcherUI() {
@@ -1097,13 +1082,223 @@
         btn.style.fontWeight = isActive ? "600" : "500";
       });
     });
-    // Update Contact WhatsApp Card if present
+    // Remove Contact WhatsApp Card if present
     const card = document.getElementById("zstudio-contact-wa-card");
     if (card) {
       card.remove();
-      injectContactWhatsAppCard();
     }
   }
+  // Contact Form WhatsApp Integration
+  const FORM_I18N = {
+    nameError: {
+      pt: "Por favor, preencha seu nome completo.",
+      en: "Please enter your full name.",
+      es: "Por favor, ingresa tu nombre completo."
+    },
+    emailError: {
+      pt: "Por favor, insira um e-mail válido.",
+      en: "Please enter a valid email address.",
+      es: "Por favor, ingresa un correo electrónico válido."
+    },
+    budgetError: {
+      pt: "Por favor, selecione uma faixa de investimento.",
+      en: "Please select an investment range.",
+      es: "Por favor, selecciona un rango de inversión."
+    },
+    messageError: {
+      pt: "Por favor, escreva uma mensagem detalhando seu projeto.",
+      en: "Please write a message detailing your project.",
+      es: "Por favor, escribe un mensaje detalhando tu proyecto."
+    },
+    sending: {
+      pt: "Abrindo WhatsApp...",
+      en: "Opening WhatsApp...",
+      es: "Abriendo WhatsApp..."
+    },
+    success: {
+      pt: "Mensagem pronta no WhatsApp!",
+      en: "Message ready in WhatsApp!",
+      es: "¡Mensaje listo en WhatsApp!"
+    }
+  };
+
+  const BUDGET_I18N = {
+    "Até R$ 1.000": { pt: "Até R$ 1.000", en: "Up to $1,000", es: "Hasta $1.000" },
+    "R$ 1.000 – R$ 3.000": { pt: "R$ 1.000 – R$ 3.000", en: "$1,000 – $3,000", es: "$1.000 – $3.000" },
+    "R$ 3.000 – R$ 5.000": { pt: "R$ 3.000 – R$ 5.000", en: "$3,000 – $5,000", es: "$3.000 – $5.000" },
+    "Acima de R$ 10.000": { pt: "Acima de R$ 10.000", en: "Above $10,000", es: "Más de $10.000" },
+    "Ainda não sei": { pt: "Ainda não sei", en: "Not sure yet", es: "Aún no lo sé" }
+  };
+
+  function getFormFeedbackElement(form) {
+    let feedback = form.querySelector("#zstudio-form-feedback");
+    if (!feedback) {
+      feedback = document.createElement("div");
+      feedback.id = "zstudio-form-feedback";
+      const submitContainer = form.querySelector(".framer-qu44xm, .framer-al9wyy-container, button[type='submit']") || form.lastElementChild;
+      if (submitContainer && submitContainer.parentNode) {
+        submitContainer.parentNode.insertBefore(feedback, submitContainer);
+      } else {
+        form.appendChild(feedback);
+      }
+    }
+    return feedback;
+  }
+
+  function handleContactFormSubmit(form) {
+    if (!form) return;
+    const lang = getActiveLang();
+    const feedback = getFormFeedbackElement(form);
+
+    const nameInput = form.querySelector("input[name*='Nome'], input[name*='name'], input[placeholder*='Nome'], input[placeholder*='name'], input[type='text']");
+    const emailInput = form.querySelector("input[type='email'], input[name*='Email'], input[name*='email'], input[placeholder*='Email']");
+    const budgetSelect = form.querySelector("select, select[name='Location']");
+    const msgInput = form.querySelector("textarea, textarea[name='Mensagem'], textarea[placeholder*='mensagem'], textarea[placeholder*='message']");
+
+    const fields = [nameInput, emailInput, budgetSelect, msgInput].filter(Boolean);
+
+    // Clear previous error styles
+    fields.forEach(el => {
+      el.classList.remove("zstudio-field-error");
+    });
+    feedback.innerHTML = "";
+
+    const nameVal = nameInput ? nameInput.value.trim() : "";
+    const emailVal = emailInput ? emailInput.value.trim() : "";
+    const rawBudget = budgetSelect ? (budgetSelect.value || "").trim() : "";
+    const msgVal = msgInput ? msgInput.value.trim() : "";
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const isBudgetSelected = rawBudget && 
+      rawBudget !== "" && 
+      !rawBudget.toLowerCase().includes("selecionar") && 
+      !rawBudget.toLowerCase().includes("select") && 
+      (budgetSelect ? budgetSelect.selectedIndex > 0 : true);
+
+    function setError(inputEl, message) {
+      if (inputEl) {
+        inputEl.classList.add("zstudio-field-error");
+        inputEl.focus();
+        const clearHandler = function() {
+          inputEl.classList.remove("zstudio-field-error");
+          feedback.innerHTML = "";
+          inputEl.removeEventListener("input", clearHandler);
+          inputEl.removeEventListener("change", clearHandler);
+        };
+        inputEl.addEventListener("input", clearHandler);
+        inputEl.addEventListener("change", clearHandler);
+      }
+      feedback.innerHTML = '<span style="color:#ef4444;font-size:13px;font-weight:500;display:inline-block;">' + message + '</span>';
+    }
+
+    // Validation
+    if (!nameVal || nameVal.length < 2) {
+      setError(nameInput, FORM_I18N.nameError[lang]);
+      return;
+    }
+
+    if (!emailVal || !emailRegex.test(emailVal)) {
+      setError(emailInput, FORM_I18N.emailError[lang]);
+      return;
+    }
+
+    if (!isBudgetSelected) {
+      setError(budgetSelect, FORM_I18N.budgetError[lang]);
+      return;
+    }
+
+    if (!msgVal || msgVal.length < 3) {
+      setError(msgInput, FORM_I18N.messageError[lang]);
+      return;
+    }
+
+    // Build message
+    const budgetDisplay = (BUDGET_I18N[rawBudget] && BUDGET_I18N[rawBudget][lang]) ? BUDGET_I18N[rawBudget][lang] : rawBudget;
+
+    let waMessage = "";
+    if (lang === "en") {
+      waMessage = `Hello! My name is ${nameVal}.\nI would like to discuss a project with Z.studio.\n\n• Email: ${emailVal}\n• Investment range: ${budgetDisplay}\n• Message:\n${msgVal}`;
+    } else if (lang === "es") {
+      waMessage = `¡Hola! Mi nombre es ${nameVal}.\nMe gustaría hablar sobre un proyecto con Z.studio.\n\n• Correo electrónico: ${emailVal}\n• Rango de inversión: ${budgetDisplay}\n• Mensaje:\n${msgVal}`;
+    } else {
+      waMessage = `Olá! Meu nome é ${nameVal}.\nGostaria de conversar sobre um projeto com a Z.studio.\n\n• E-mail: ${emailVal}\n• Faixa de investimento: ${budgetDisplay}\n• Mensagem:\n${msgVal}`;
+    }
+
+    const waUrl = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(waMessage)}`;
+
+    // Show feedback
+    feedback.innerHTML = '<span style="color:#22c55e;font-size:13px;font-weight:500;display:inline-block;">' + FORM_I18N.sending[lang] + '</span>';
+
+    // Dispatch WhatsApp opening via link click
+    const waLink = document.createElement("a");
+    waLink.href = waUrl;
+    waLink.target = "_blank";
+    waLink.rel = "noopener noreferrer";
+    document.body.appendChild(waLink);
+    waLink.click();
+
+    setTimeout(() => {
+      waLink.remove();
+      feedback.innerHTML = '<span style="color:#22c55e;font-size:13px;font-weight:500;display:inline-block;">' + FORM_I18N.success[lang] + '</span>';
+      setTimeout(() => {
+        if (feedback) feedback.innerHTML = "";
+      }, 5000);
+    }, 400);
+  }
+
+  function initContactForm() {
+    const forms = document.querySelectorAll("form, .framer-1o4ffb9");
+    forms.forEach(form => {
+      if (form.getAttribute("data-zstudio-form-attached") === "true") return;
+      form.setAttribute("data-zstudio-form-attached", "true");
+      form.setAttribute("novalidate", "true");
+
+      // Prevent native and React submit
+      form.addEventListener("submit", function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        handleContactFormSubmit(form);
+      }, true);
+
+      // Handle button click directly
+      const submitBtn = form.querySelector("button[type='submit'], [data-reset='button'], .framer-qu44xm, .framer-al9wyy-container");
+      if (submitBtn) {
+        submitBtn.addEventListener("click", function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          e.stopImmediatePropagation();
+          handleContactFormSubmit(form);
+        }, true);
+      }
+    });
+  }
+
+  // Global capture interception to guarantee no submission escapes
+  document.addEventListener("submit", function(e) {
+    const form = e.target.closest("form") || (e.target.tagName === "FORM" ? e.target : null);
+    if (form) {
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      handleContactFormSubmit(form);
+    }
+  }, true);
+
+  document.addEventListener("click", function(e) {
+    const target = e.target;
+    const btn = target.closest("button[type='submit'], .framer-qu44xm, .framer-al9wyy-container");
+    if (btn) {
+      const form = btn.closest("form") || document.querySelector("form");
+      if (form) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        handleContactFormSubmit(form);
+      }
+    }
+  }, true);
+
   // Initial Boot
   function init() {
     removeLocationAndTime();
@@ -1114,6 +1309,7 @@
     updateWhatsAppLinks();
     removeSocialLinks();
     injectContactWhatsAppCard();
+    initContactForm();
 
     // Observe DOM mutations to preserve translations, switcher, WhatsApp links, and dedup state across Framer updates
     let debounceTimer;
@@ -1128,6 +1324,7 @@
         updateWhatsAppLinks();
         removeSocialLinks();
         injectContactWhatsAppCard();
+        initContactForm();
       }, 50);
     });
 
