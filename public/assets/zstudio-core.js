@@ -808,6 +808,29 @@
     });
   }
 
+  // A "Project Card" whose link points back at the page it's already on
+  // (e.g. a leftover "view all" tile inside /projects itself) makes no
+  // sense there and, in a 2-column grid, leaves the real cards at an odd
+  // count — 4 real projects + this tile = 5, so the last row has one card
+  // and a dangling empty cell beside it. Drop the self-referencing tile so
+  // the grid holds a clean, evenly-filled set of real project cards.
+  function removeSelfReferencingProjectCards() {
+    document.querySelectorAll("a[href]").forEach(a => {
+      if (!a.querySelector(':scope > [data-framer-name="Project Card"]')) return;
+      const href = a.getAttribute("href") || "";
+      let targetPath;
+      try {
+        targetPath = new URL(href, window.location.href).pathname.replace(/\/$/, "");
+      } catch (e) {
+        return;
+      }
+      const currentPath = window.location.pathname.replace(/\/$/, "");
+      if (targetPath === currentPath) {
+        a.remove();
+      }
+    });
+  }
+
   // Standardize internal URLs: canonical routes without trailing slashes
   function canonicalizeInternalLinks() {
     document.querySelectorAll("a[href]").forEach(a => {
@@ -1059,25 +1082,18 @@
 
         /*
          * Project card titles ("Websites", "SaaS / Produto", etc.) sit in a
-         * fixed-height box (framer-nkianr, data-framer-name="Content") that
-         * clips with overflow:clip. On the fonts this exports with, the text
-         * is a couple of px taller than that box, so descenders/accents get
-         * cut off. Let the box grow instead of clipping. The tablet/mobile
-         * breakpoint bakes an even tighter box (43px, zero vertical padding
-         * vs desktop's 3px), which clips worse — min-height/padding here are
-         * intentionally more generous than the baked desktop value so every
-         * breakpoint has headroom.
+         * fixed-height box (framer-nkianr, data-framer-name="Content") whose
+         * text is a couple of px taller than the box, clipping descenders
+         * ("p" in "Produto"). Growing framer-nkianr alone doesn't fix it:
+         * its own parent card (.framer-jp00ba, height:100%) ALSO clips with
+         * overflow:clip at a fixed height bound to the card/grid cell, so
+         * extra height on the inner box still gets cut off one level up.
+         * Instead, nudge the text itself up a few px so its descender clears
+         * the existing clip boundary, without changing any box's height.
          */
-        .framer-nkianr {
-          height: auto !important;
-          min-height: 56px !important;
-          overflow: visible !important;
-          padding-top: 8px !important;
-          padding-bottom: 8px !important;
-        }
         .framer-14o4nkg {
-          height: auto !important;
-          overflow: visible !important;
+          line-height: 1.15 !important;
+          transform: translateY(-3px) !important;
         }
 
         /*
@@ -1093,19 +1109,6 @@
         }
         [data-framer-name="Backdrop"] img {
           object-fit: contain !important;
-        }
-
-        /*
-         * /projects lists 4 real project cards plus a "view all" tile in a
-         * 2-column grid (grid-template-columns: repeat(2, ...)) — 5 items is
-         * odd for 2 columns, so the last row has one card and a dangling
-         * empty cell to its right. Span the "view all" tile (the only grid
-         * card whose link points back at /projects) across both columns so
-         * it fills that row instead of leaving a gap.
-         */
-        a[href="/projects"]:has(> [data-framer-name="Project Card"]) {
-          grid-column: 1 / -1 !important;
-          justify-self: center !important;
         }
 
         /* Simplified "Mais projetos" block: just the centered CTA link */
@@ -1437,6 +1440,7 @@
     cleanupStructuralDuplicates();
     simplifyMoreProjectsSection();
     canonicalizeInternalLinks();
+    removeSelfReferencingProjectCards();
     injectLanguageSwitcher();
     applyTranslations();
     updateWhatsAppLinks();
@@ -1453,6 +1457,7 @@
         cleanupStructuralDuplicates();
         simplifyMoreProjectsSection();
         canonicalizeInternalLinks();
+        removeSelfReferencingProjectCards();
         injectLanguageSwitcher();
         applyTranslations();
         updateWhatsAppLinks();
