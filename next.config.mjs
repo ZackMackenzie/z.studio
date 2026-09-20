@@ -111,6 +111,22 @@ const nextConfig = {
       ],
     };
   },
+  async headers() {
+    return [
+      {
+        // Framer's own exported assets (fonts, images, CMS bundles) are
+        // content-hashed in their filename/path, so they're safe to cache
+        // "forever" — a future export writes new paths instead of mutating
+        // these. zstudio-core.js is NOT under this path and keeps Next's
+        // default revalidate-on-every-request caching, since it's a plain
+        // filename that does get edited in place.
+        source: "/assets/framerusercontent.com/:path*",
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
+        ],
+      },
+    ];
+  },
 };
 
 export default nextConfig;

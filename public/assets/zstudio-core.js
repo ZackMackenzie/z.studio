@@ -894,10 +894,18 @@
   }
 
   function injectLanguageSwitcher() {
-    // 1. Ensure global CSS guarantees
-    if (!document.getElementById("zstudio-nav-style")) {
-      const style = document.createElement("style");
-      style.id = "zstudio-nav-style";
+    // 1. Ensure global CSS guarantees. Always rewrite the tag's content (not
+    // just create-if-missing): static exports of this site have occasionally
+    // baked a stale copy of this same <style id="zstudio-nav-style"> directly
+    // into the HTML, and a create-if-missing guard would leave that stale
+    // copy in place forever since the id already "exists".
+    {
+      let style = document.getElementById("zstudio-nav-style");
+      if (!style) {
+        style = document.createElement("style");
+        style.id = "zstudio-nav-style";
+        document.head.appendChild(style);
+      }
       style.textContent = `
         /* Always force black background on html and body */
         html, body {
@@ -1005,6 +1013,22 @@
           box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.25) !important;
         }
 
+        /*
+         * Project card titles ("Websites", "SaaS / Produto", etc.) sit in a
+         * fixed-height box (framer-nkianr, data-framer-name="Content") that
+         * clips with overflow:clip. On the fonts this exports with, the text
+         * is a couple of px taller than that box, so descenders/accents get
+         * cut off. Let the box grow instead of clipping.
+         */
+        .framer-nkianr {
+          height: auto !important;
+          min-height: 49px !important;
+          overflow: visible !important;
+        }
+        .framer-14o4nkg {
+          height: auto !important;
+        }
+
         @media (max-width: 600px) {
           .zstudio-nav-right {
             gap: 8px !important;
@@ -1022,7 +1046,6 @@
           }
         }
       `;
-      document.head.appendChild(style);
     }
 
     // 2. Hide any legacy/floating elements
