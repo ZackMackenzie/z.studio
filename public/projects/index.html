@@ -97,6 +97,33 @@
     display: none !important;
   }
 
+  /* The custom cursor-follow "Visualizar" pill (a Framer smart-cursor
+     component, injected client-side only — never present in the static
+     HTML, so this can't be fixed by editing markup) renders white text
+     on its own near-white pill background, making it unreadable. Force
+     a dark, legible color for just that pill's text. */
+  .framer-FetdQ .framer-styles-preset-18tvy3p {
+    color: #0a0a0a !important;
+  }
+
+
+  /* The "Websites" card's DOM node is JS-cloned on this page (see
+     ensureWebsitesProjectCard() in zstudio-core.js — hydration sometimes
+     drops this specific card here, unlike on Home, so it's rebuilt via
+     cloneNode). A clone never carries over the original React/Framer
+     Motion event listeners, so the same image-scale hover effect every
+     other project card gets from Framer Motion's whileHover never fires
+     for this one card. Framer drives that effect entirely via JS inline
+     styles, not a CSS rule, so nothing here was being overridden — this
+     adds an equivalent native :hover trigger, immune to lost JS
+     listeners, matching the sibling cards' scale and feel. */
+  a.framer-JqWh3[href="/projects/websites"] .framer-8mr5mw {
+    transition: transform 0.3s cubic-bezier(0.44, 0, 0.56, 1) !important;
+  }
+  a.framer-JqWh3[href="/projects/websites"]:hover .framer-8mr5mw {
+    transform: scale(1.09) !important;
+  }
+
   /* Smooth cross-page entrance transition (native View Transitions API for
      full navigations — no JS router, no SPA interception, works with this
      site's plain <a href> multi-page navigation as-is). Unsupported

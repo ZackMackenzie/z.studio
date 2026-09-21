@@ -97,6 +97,16 @@
     display: none !important;
   }
 
+  /* The custom cursor-follow "Visualizar" pill (a Framer smart-cursor
+     component, injected client-side only — never present in the static
+     HTML, so this can't be fixed by editing markup) renders white text
+     on its own near-white pill background, making it unreadable. Force
+     a dark, legible color for just that pill's text. */
+  .framer-FetdQ .framer-styles-preset-18tvy3p {
+    color: #0a0a0a !important;
+  }
+
+
   /* Smooth cross-page entrance transition (native View Transitions API for
      full navigations — no JS router, no SPA interception, works with this
      site's plain <a href> multi-page navigation as-is). Unsupported
