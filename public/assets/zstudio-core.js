@@ -1085,9 +1085,22 @@
         wrap.replaceChild(div, el);
         el = div;
       }
-      // Sized to match the visual weight of the adjacent arrow icon
-      // (~94px/50px tall at these breakpoints), not an arbitrary value.
-      const desktop = window.matchMedia("(min-width: 1200px)").matches;
+      // Matches the adjacent arrow icon's own breakpoint, not the
+      // button's Desktop/Tablet variant boundary (1200px) used before.
+      // The arrow (and its text container, and the button's own height)
+      // is a hard two-state swap: 80x50 below ~810px viewport width,
+      // 130x185 from ~810px up through desktop, with NO further scaling
+      // past that point in either direction — verified across the full
+      // 340-1920px range. A 1200px threshold left text stuck at the small
+      // 48px size next to the already-full-size 130x185 arrow across the
+      // whole ~810-1199px range. A true fluid font-size independent of
+      // the container was tried and reverted: the text's own container
+      // is that SAME hard 240x68/712x185 two-state swap (not fluid
+      // either), so any size much past 48px while still in the small
+      // 240x68 box wraps to two lines and overflows — confirmed by
+      // testing the full range. The transition below is what makes the
+      // swap itself feel smooth instead of an abrupt pop.
+      const desktop = window.matchMedia("(min-width: 810px)").matches;
       const correctSize = desktop ? "90px" : "48px";
       if (el.style.fontSize !== correctSize) el.style.fontSize = correctSize;
     });

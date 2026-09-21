@@ -95,6 +95,26 @@
     height: 70px !important;
   }
 
+  /* "Começar" is a plain huge-type text link (no button pill behind it —
+     confirmed visually), so the only two things that can move without
+     touching its locked box size are the text itself and a new purely
+     decorative underline. font-size transitions smoothly across the
+     48px/90px breakpoint swap instead of popping. The underline is the
+     classic background-image trick (a gradient sized 0% wide, animated
+     to 100%) rather than an extra DOM element or border, so it can't
+     affect layout/box size and needs no JS — pure CSS, plays under the
+     existing arrow-slide hover animation without touching it. */
+  .framer-GYusQ .random-word-appear > div {
+    background-image: linear-gradient(currentColor, currentColor);
+    background-repeat: no-repeat;
+    background-position: 0 100%;
+    background-size: 0% 3px;
+    transition: font-size 0.3s cubic-bezier(0.4, 0, 0.2, 1), background-size 0.45s cubic-bezier(0.65, 0, 0.35, 1);
+  }
+  .framer-GYusQ:hover .random-word-appear > div {
+    background-size: 100% 3px;
+  }
+
   a[href*="framer.link"],
   a[href*="framer.com/templates"],
   a[href*="instagram.com"],
