@@ -82,6 +82,19 @@
     <!-- End of headEnd -->
 	
   <style id="zstudio-overrides">
+  /* The "Começar" CTA button's hover variant declares height:71px vs the
+     default variant's height:70px (Tablet/Mobile only — Desktop's hover
+     variant has no height override at all, so it already stays fixed at
+     200px). A 1px difference is enough to violate "the button must never
+     change size on hover." Width is already safe: the button's own inline
+     style="width:100%" overrides both variants' declared width (349px vs
+     389px) regardless. Only height needs pinning, and only for this one
+     button (scoped to its unique class combination). The icon slide/fade
+     hover animation itself is untouched. */
+  .framer-GYusQ.framer-v-ibam2r.framer-sc00to {
+    height: 70px !important;
+  }
+
   a[href*="framer.link"],
   a[href*="framer.com/templates"],
   a[href*="instagram.com"],
@@ -155,7 +168,7 @@
     to { opacity: 0; }
   }
   @keyframes zstudio-page-fade-in {
-    from { opacity: 0; transform: translateY(6px); }
+    from { opacity: 0; transform: translateY(12px); }
     to { opacity: 1; transform: translateY(0); }
   }
 </style>
