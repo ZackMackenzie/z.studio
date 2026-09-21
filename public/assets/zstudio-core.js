@@ -7,6 +7,29 @@
  */
 
 (function() {
+  // The Home page's word-row ("Aplicativos", "Design de produtos", ...)
+  // ships as two mutually exclusive Framer breakpoint variants: a
+  // Desktop-only absolute-positioned scatter ("Gravity") and a
+  // Tablet/Mobile continuous ticker row. React's hydration unmounts
+  // whichever variant doesn't match the real viewport within ~300ms of
+  // DOMContentLoaded, so on Desktop the ticker row is gone from the DOM
+  // long before any post-hydration repair pass could run. Capture its
+  // markup here, synchronously, at script-parse time — this script is
+  // deferred, so it always executes before DOMContentLoaded/hydration.
+  let capturedWordTickerHTML = null;
+  const earlyWordTicker = document.querySelector(".framer-nksdxl");
+  if (earlyWordTicker) capturedWordTickerHTML = earlyWordTicker.outerHTML;
+
+  // Framer's own runtime sets document.title on every page after
+  // hydration, independent of anything in this file — but on the top-level
+  // pages (Home/About/Contact/Projects) it only knows the site's internal
+  // project name ("Asher Vale", never renamed to Z.studio) and overwrites
+  // the correct per-page <title> from the static HTML with that generic
+  // value, repeatedly, for as long as the page stays open. Capture the
+  // correct title here at script-parse time (before hydration can touch
+  // it) so applyTranslations() below can keep restoring it.
+  const originalTitle = document.title;
+
   const WA_NUMBER = "5511914406822";
 
   const WA_MESSAGES = {
@@ -529,20 +552,28 @@
     const lang = getActiveLang();
 
     // 1. Document Title
-    const titleMap = {
-      "Asher Vale": { pt: "Z.studio", en: "Z.studio", es: "Z.studio" },
-      "Contato - Asher Vale": { pt: "Contato - Z.studio", en: "Contact - Z.studio", es: "Contacto - Z.studio" },
-      "Sobre mim - Asher Vale": { pt: "Sobre - Z.studio", en: "About - Z.studio", es: "Sobre mí - Z.studio" },
-      "Websites - Asher Vale": { pt: "Websites - Z.studio", en: "Websites - Z.studio", es: "Sitios Web - Z.studio" },
-      "Identidade de Marca - Asher Vale": { pt: "Identidade de Marca - Z.studio", en: "Brand Identity - Z.studio", es: "Identidad de Marca - Z.studio" },
-      "SaaS / Produto - Asher Vale": { pt: "SaaS / Produto - Z.studio", en: "SaaS / Product - Z.studio", es: "SaaS / Producto - Z.studio" },
-      "Criativo & Ads - Asher Vale": { pt: "Criativo & Ads - Z.studio", en: "Creative & Ads - Z.studio", es: "Creatividad & Ads - Z.studio" }
+    // Framer's runtime doesn't reliably include page-identifying text when
+    // it overwrites document.title (see the originalTitle capture at the
+    // top of this file for why) — Home/About/Contact/Projects just get the
+    // generic site name, not something safely pattern-matchable. Instead,
+    // always resolve from the captured original PT-BR title, translating
+    // it only if this exact title is a known one and the active language
+    // isn't PT. This self-corrects regardless of what Framer's runtime did
+    // to document.title in between, and needs no per-page URL matching.
+    const titleTranslations = {
+      "Z.studio - Design, tecnologia e desenvolvimento": { en: "Z.studio - Design, technology and development", es: "Z.studio - Diseño, tecnología y desarrollo" },
+      "Sobre - Z.studio": { en: "About - Z.studio", es: "Sobre mí - Z.studio" },
+      "Contato - Z.studio": { en: "Contact - Z.studio", es: "Contacto - Z.studio" },
+      "Projetos - Z.studio": { en: "Projects - Z.studio", es: "Proyectos - Z.studio" },
+      "Websites - Z.studio": { en: "Websites - Z.studio", es: "Sitios Web - Z.studio" },
+      "Identidade de Marca - Z.studio": { en: "Brand Identity - Z.studio", es: "Identidad de Marca - Z.studio" },
+      "SaaS / Produto - Z.studio": { en: "SaaS / Product - Z.studio", es: "SaaS / Producto - Z.studio" },
+      "Criativo & Ads - Z.studio": { en: "Creative & Ads - Z.studio", es: "Creatividad & Ads - Z.studio" }
     };
-    for (const [key, val] of Object.entries(titleMap)) {
-      if (document.title.includes(key) || document.title.includes(val.pt) || document.title.includes(val.en) || document.title.includes(val.es)) {
-        document.title = val[lang] || val.pt;
-        break;
-      }
+    const translated = titleTranslations[originalTitle];
+    const desiredTitle = (lang !== "pt" && translated && translated[lang]) ? translated[lang] : originalTitle;
+    if (originalTitle && document.title !== desiredTitle) {
+      document.title = desiredTitle;
     }
 
     // 2. Walk text nodes and elements
@@ -902,7 +933,7 @@
         img.removeAttribute("srcset");
       }
 
-      const heading = clone.querySelector("h4");
+      const heading = clone.querySelector("h3, h4");
       if (heading) heading.textContent = "Websites";
 
       if (emptySlot) {
@@ -910,6 +941,79 @@
       } else {
         gridParent.insertBefore(clone, templateContainer);
       }
+    });
+  }
+
+  // Restores the word-row ticker on Desktop, since hydration unmounts it
+  // there (see the capture at the top of this file) — the CSS override
+  // that hides the physics scatter and shows the ticker only has an
+  // effect if the ticker element actually exists in the DOM. The ticker
+  // is normally a child of the shared .framer-1u5je0q wrapper (alongside
+  // the now-always-hidden scatter container), so it's restored there,
+  // matching its original nesting.
+  function ensureDesktopWordRow() {
+    if (!capturedWordTickerHTML) return;
+    if (document.querySelector(".framer-nksdxl")) return;
+    const wrapper = document.querySelector(".framer-1u5je0q");
+    if (!wrapper) return;
+    const holder = document.createElement("div");
+    holder.innerHTML = capturedWordTickerHTML;
+    const restored = holder.firstElementChild;
+    if (!restored) return;
+
+    // The ticker's <ul> starts at opacity:0 and only fades in via a scroll
+    // IntersectionObserver React attaches to the ORIGINAL node — a cloned
+    // node has no observer watching it, so it would stay invisible forever
+    // (same class of bug fixed for the Websites card clone above).
+    const list = restored.querySelector("ul");
+    if (list) {
+      list.style.opacity = "1";
+
+      // The continuous scroll itself is driven by JS updating this exact
+      // <ul>'s inline transform every frame (not a CSS animation), so a
+      // cloned node never moves on its own. Duplicate its items once and
+      // drive a plain CSS keyframe loop instead — a standard seamless
+      // marquee technique, and the only way to keep it "continuous" here
+      // without hand-rolling a requestAnimationFrame loop.
+      const items = Array.from(list.children);
+      items.forEach(li => list.appendChild(li.cloneNode(true)));
+      list.style.transform = "";
+      list.classList.add("zstudio-word-row-loop");
+      if (!document.getElementById("zstudio-word-row-style")) {
+        const style = document.createElement("style");
+        style.id = "zstudio-word-row-style";
+        style.textContent = "@keyframes zstudio-word-row-scroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}" +
+          ".zstudio-word-row-loop{animation:zstudio-word-row-scroll 22s linear infinite}";
+        document.head.appendChild(style);
+      }
+    }
+
+    wrapper.appendChild(restored);
+  }
+
+  // Two heading-semantics issues (Lighthouse-confirmed "heading-order"
+  // failures): the "Começar" CTA button was authored using Framer's H1
+  // style preset (a second, spurious H1 on a page that already has one for
+  // the real headline), and the project-card titles ("Websites", etc.)
+  // render as H4 immediately after the page's only H2, skipping H3.
+  // Editing the static HTML source for these isn't enough — React actively
+  // manages these exact elements and reconciles their tag name back to
+  // whatever Framer's compiled component defines, independent of the
+  // pre-rendered markup, so the fix has to happen here at the DOM level.
+  function fixHeadingSemantics() {
+    document.querySelectorAll("h1").forEach(h1 => {
+      if (h1.textContent.trim() !== "Começar") return;
+      const div = document.createElement("div");
+      Array.from(h1.attributes).forEach(a => div.setAttribute(a.name, a.value));
+      div.innerHTML = h1.innerHTML;
+      h1.replaceWith(div);
+    });
+
+    document.querySelectorAll("a.framer-JqWh3 h4").forEach(h4 => {
+      const h3 = document.createElement("h3");
+      Array.from(h4.attributes).forEach(a => h3.setAttribute(a.name, a.value));
+      h3.innerHTML = h4.innerHTML;
+      h4.replaceWith(h3);
     });
   }
 
@@ -1564,6 +1668,8 @@
     canonicalizeInternalLinks();
     removeSelfReferencingProjectCards();
     ensureWebsitesProjectCard();
+    ensureDesktopWordRow();
+    fixHeadingSemantics();
     injectLanguageSwitcher();
     applyTranslations();
     updateWhatsAppLinks();
@@ -1573,7 +1679,18 @@
 
     // Observe DOM mutations to preserve translations, switcher, WhatsApp links, and dedup state across Framer updates
     let debounceTimer;
-    const observer = new MutationObserver(() => {
+    const observer = new MutationObserver((records) => {
+      // The Contact page's budget dropdown has a pre-existing Framer bug
+      // where its <option> elements churn (added/removed) continuously,
+      // dozens of times per second, forever — nothing in this codebase
+      // causes or can stop that loop at its source (it's inside Framer's
+      // own compiled form component). None of the repair functions below
+      // care about <option> churn, so skip rescheduling when a batch is
+      // made up ENTIRELY of that noise, instead of needlessly re-running
+      // every repair function ~20x/second for as long as the page is open.
+      const onlyOptionChurn = records.every(r => r.target && r.target.nodeType === 1 && r.target.tagName === "OPTION");
+      if (onlyOptionChurn) return;
+
       clearTimeout(debounceTimer);
       debounceTimer = setTimeout(() => {
         removeLocationAndTime();
@@ -1582,6 +1699,8 @@
         canonicalizeInternalLinks();
         removeSelfReferencingProjectCards();
         ensureWebsitesProjectCard();
+        ensureDesktopWordRow();
+        fixHeadingSemantics();
         injectLanguageSwitcher();
         applyTranslations();
         updateWhatsAppLinks();
