@@ -848,6 +848,21 @@
       const template = groupCards[0];
       const templateContainer = template.parentElement;
       if (!templateContainer || !templateContainer.parentElement) return;
+      const gridParent = templateContainer.parentElement;
+
+      // Hydration doesn't just drop the Websites card's content — on the
+      // grid (a plain CSS Grid with auto-placement, no explicit
+      // grid-column/row per card), it leaves behind the original empty
+      // "-container" wrapper as a zero-content grid item. That phantom
+      // item still claims a cell (the first one, top-left) and silently
+      // shifts every real card's auto-placed position over by one, which
+      // is why the grid looked staggered instead of a clean 2x2. Reuse
+      // that exact leftover slot for the clone instead of inserting a new
+      // grid item — this both removes the phantom cell and naturally
+      // restores the intended top-left position for Websites.
+      const emptySlot = Array.from(gridParent.children).find(
+        el => el !== templateContainer && el.children.length === 0 && el.className === templateContainer.className
+      );
 
       const clone = templateContainer.cloneNode(true);
 
@@ -875,7 +890,11 @@
       const heading = clone.querySelector("h4");
       if (heading) heading.textContent = "Websites";
 
-      templateContainer.parentElement.insertBefore(clone, templateContainer);
+      if (emptySlot) {
+        emptySlot.replaceWith(clone);
+      } else {
+        gridParent.insertBefore(clone, templateContainer);
+      }
     });
   }
 
@@ -1086,6 +1105,23 @@
           align-items: center !important;
           gap: 14px !important;
           flex-shrink: 0 !important;
+        }
+
+        /*
+         * "Entre em contato agora" must sit centered on the header's own
+         * width, not next to "São Paulo, SP" (it only ended up beside it
+         * because both share .zstudio-nav-cta-group so the original
+         * 3-child space-between math on .framer-1o5g5u1 wasn't disturbed).
+         * Taking it out of that flex flow with absolute + left:50% centers
+         * it against the header container's actual width at any viewport,
+         * instead of whatever the flex distribution happened to produce.
+         * .framer-1o5g5u1 is already position:relative.
+         */
+        .framer-9nc42h {
+          position: absolute !important;
+          left: 50% !important;
+          top: 50% !important;
+          transform: translate(-50%, -50%) !important;
         }
 
         .zstudio-nav-location {
