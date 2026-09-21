@@ -846,11 +846,22 @@
   // extra hand-added card has no matching client data and gets pruned.
   // Re-create it by cloning a surviving card and swapping its link/image/
   // title, on every page where the grid appears (home + /projects).
+  //
+  // The card selector deliberately does NOT filter by
+  // [data-framer-name^="Variant"] even though that's how these cards are
+  // marked at rest — Framer's own hover-variant swap REMOVES that exact
+  // attribute from whichever card is currently hovered (swapping to a
+  // hover-specific class instead), so filtering on it made the hovered
+  // card invisible to this function. It would then conclude "no Websites
+  // card in this grid" and clone a brand new one right on top of the
+  // real, still-present one — a genuine duplicate, not a visual glitch.
+  // ".framer-JqWh3" alone stays present through hover and reliably
+  // matches only the 4 real project card anchors.
   function ensureWebsitesProjectCard() {
     const WEBSITES_HREF = "/projects/websites";
     const WEBSITES_IMG = "/assets/framerusercontent.com/images/HUTn1SLesaIuorSfHOln147tsA.0xnxfmu.jpg";
 
-    const cards = Array.from(document.querySelectorAll('a.framer-JqWh3[data-framer-name^="Variant"]'));
+    const cards = Array.from(document.querySelectorAll('a.framer-JqWh3'));
     if (cards.length === 0) return;
 
     const grids = new Map();
