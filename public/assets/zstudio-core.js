@@ -1018,6 +1018,45 @@
     wrapper.appendChild(restored);
   }
 
+  // Home's 4 service-preview thumbnails ("Websites", "Identidade de
+  // Marca", "Criativo & Ads", "SaaS / Produto") sit in fixed-size boxes
+  // and originally used object-fit:contain, which letterboxed anything
+  // that wasn't already close to the box's aspect ratio — worst for the
+  // portrait "Criativo & Ads" photo, reduced to a sliver in the middle of
+  // a landscape box. Swapped in higher-quality source photos and
+  // object-fit:cover so every box is filled edge-to-edge, scaled
+  // proportionally (no stretching) with the overflow cropped. A static
+  // HTML edit doesn't survive hydration for these <img> elements either
+  // (React reconciles them back to Framer's own src/style), so both are
+  // re-applied every repair cycle. Scoped to "/" only — the same 4
+  // photos elsewhere (the /projects grid, each project's own hero image)
+  // intentionally keep their original crop-free "contain" treatment and
+  // are untouched.
+  const HOME_THUMBNAILS = {
+    "Websites": { src: "/assets/framerusercontent.com/images/zstudio-home-thumb-websites.jpg", w: 4800, h: 3584 },
+    "Identidade de Marca": { src: "/assets/framerusercontent.com/images/zstudio-home-thumb-identidade.jpg", w: 4696, h: 3584 },
+    "Criativo & Ads": { src: "/assets/framerusercontent.com/images/zstudio-home-thumb-criativo.jpg", w: 3072, h: 5572 },
+    "SaaS / Produto": { src: "/assets/framerusercontent.com/images/zstudio-home-thumb-saas.jpg", w: 4572, h: 3712 }
+  };
+  function ensureHomeThumbnailsFillSquares() {
+    if (window.location.pathname !== "/") return;
+    document.querySelectorAll('a.framer-JqWh3').forEach(a => {
+      const heading = a.querySelector("h3, h4");
+      const name = heading ? heading.textContent.trim() : null;
+      const target = HOME_THUMBNAILS[name];
+      if (!target) return;
+      const img = a.querySelector("img");
+      if (!img) return;
+      if (!img.src.endsWith(target.src.replace(/^\//, ""))) {
+        img.setAttribute("src", target.src);
+        img.setAttribute("width", target.w);
+        img.setAttribute("height", target.h);
+        img.removeAttribute("srcset");
+      }
+      if (img.style.objectFit !== "cover") img.style.objectFit = "cover";
+    });
+  }
+
   // Two heading-semantics issues (Lighthouse-confirmed "heading-order"
   // failures): the "Começar" CTA button was authored using Framer's H1
   // style preset (a second, spurious H1 on a page that already has one for
@@ -1713,6 +1752,7 @@
     removeSelfReferencingProjectCards();
     ensureWebsitesProjectCard();
     ensureDesktopWordRow();
+    ensureHomeThumbnailsFillSquares();
     fixHeadingSemantics();
     injectLanguageSwitcher();
     applyTranslations();
@@ -1744,6 +1784,7 @@
         removeSelfReferencingProjectCards();
         ensureWebsitesProjectCard();
         ensureDesktopWordRow();
+        ensureHomeThumbnailsFillSquares();
         fixHeadingSemantics();
         injectLanguageSwitcher();
         applyTranslations();
