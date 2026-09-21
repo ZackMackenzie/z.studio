@@ -832,7 +832,22 @@
     });
 
     grids.forEach((groupCards, grid) => {
-      const websitesCard = groupCards.find(a => a.textContent.trim() === "Websites");
+      const websitesMatches = groupCards.filter(a => a.textContent.trim() === "Websites");
+      if (websitesMatches.length > 1) {
+        // Under real network timing (slower than a local build), React's
+        // reconciliation of the 3-item bound collection against this
+        // hand-added card can race with the clone/replace below and leave
+        // two "Websites" cells in the same grid instead of one. Collapse
+        // back to a single card, keeping the first (top-left) and dropping
+        // the extra cell(s) entirely so the grid re-flows to the correct
+        // item count.
+        websitesMatches.slice(1).forEach(dup => {
+          const dupContainer = dup.parentElement;
+          (dupContainer || dup).remove();
+        });
+      }
+
+      const websitesCard = websitesMatches[0];
       if (websitesCard) {
         // Card survived hydration, but on some pages React keeps resetting
         // its href back to a stale "/projects" prop baked into the
