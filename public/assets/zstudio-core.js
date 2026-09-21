@@ -1001,12 +1001,27 @@
   // whatever Framer's compiled component defines, independent of the
   // pre-rendered markup, so the fix has to happen here at the DOM level.
   function fixHeadingSemantics() {
-    document.querySelectorAll("h1").forEach(h1 => {
-      if (h1.textContent.trim() !== "Começar") return;
-      const div = document.createElement("div");
-      Array.from(h1.attributes).forEach(a => div.setAttribute(a.name, a.value));
-      div.innerHTML = h1.innerHTML;
-      h1.replaceWith(div);
+    // ".random-word-appear" is this one CTA text's own unique wrapper (the
+    // "Começar" WhatsApp button). Framer's compiled component re-applies
+    // an oversized font-size (140px desktop / 50px mobile — evidently
+    // copied from the headline style) on every hydration pass, clipped by
+    // the button's overflow:clip so most of the word never shows. A
+    // static-HTML edit alone doesn't survive hydration here either (same
+    // issue as the H1 tag below), so both the tag and the size are
+    // enforced every repair cycle.
+    document.querySelectorAll(".random-word-appear").forEach(wrap => {
+      let el = wrap.firstElementChild;
+      if (!el || el.textContent.trim() !== "Começar") return;
+      if (el.tagName === "H1") {
+        const div = document.createElement("div");
+        Array.from(el.attributes).forEach(a => div.setAttribute(a.name, a.value));
+        div.innerHTML = el.innerHTML;
+        wrap.replaceChild(div, el);
+        el = div;
+      }
+      const desktop = window.matchMedia("(min-width: 1200px)").matches;
+      const correctSize = desktop ? "32px" : "20px";
+      if (el.style.fontSize !== correctSize) el.style.fontSize = correctSize;
     });
 
     document.querySelectorAll("a.framer-JqWh3 h4").forEach(h4 => {

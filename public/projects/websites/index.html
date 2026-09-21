@@ -96,6 +96,38 @@
   a[href*="pinterest.com"] {
     display: none !important;
   }
+
+  /* Smooth cross-page entrance transition (native View Transitions API for
+     full navigations — no JS router, no SPA interception, works with this
+     site's plain <a href> multi-page navigation as-is). Unsupported
+     browsers simply ignore this and navigate normally: pure progressive
+     enhancement, zero risk of regression. Short, subtle, and fully
+     disabled under prefers-reduced-motion. */
+  @view-transition {
+    navigation: auto;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    ::view-transition-group(*),
+    ::view-transition-old(*),
+    ::view-transition-new(*) {
+      animation: none !important;
+    }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    ::view-transition-old(root) {
+      animation: zstudio-page-fade-out 120ms ease-out both;
+    }
+    ::view-transition-new(root) {
+      animation: zstudio-page-fade-in 220ms ease-out both;
+    }
+  }
+  @keyframes zstudio-page-fade-out {
+    to { opacity: 0; }
+  }
+  @keyframes zstudio-page-fade-in {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
 </style>
   <script src="/assets/zstudio-core.js" defer></script>
 <style>img[src*="HUTn1SLesaIuorSfHOln147tsA"]{object-fit:contain!important;background-color:#000}</style></head>
