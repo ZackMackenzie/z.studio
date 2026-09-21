@@ -808,6 +808,77 @@
     });
   }
 
+  // The "Websites" project card only exists in the static HTML export; it
+  // was never part of the underlying Framer collection the other 3 cards
+  // (Identidade de Marca, Criativo & Ads, SaaS / Produto) are bound to. The
+  // moment React hydrates and reconciles that collection-backed grid, the
+  // extra hand-added card has no matching client data and gets pruned.
+  // Re-create it by cloning a surviving card and swapping its link/image/
+  // title, on every page where the grid appears (home + /projects).
+  function ensureWebsitesProjectCard() {
+    const WEBSITES_HREF = "/projects/websites";
+    const WEBSITES_IMG = "/assets/framerusercontent.com/images/HUTn1SLesaIuorSfHOln147tsA.0xnxfmu.jpg";
+
+    const cards = Array.from(document.querySelectorAll('a.framer-JqWh3[data-framer-name^="Variant"]'));
+    if (cards.length === 0) return;
+
+    const grids = new Map();
+    cards.forEach(a => {
+      const container = a.parentElement;
+      const grid = container ? container.parentElement : null;
+      if (!grid) return;
+      if (!grids.has(grid)) grids.set(grid, []);
+      grids.get(grid).push(a);
+    });
+
+    grids.forEach((groupCards, grid) => {
+      const websitesCard = groupCards.find(a => a.textContent.trim() === "Websites");
+      if (websitesCard) {
+        // Card survived hydration, but on some pages React keeps resetting
+        // its href back to a stale "/projects" prop baked into the
+        // component instance itself (not fixable by editing the static
+        // HTML, since hydration overwrites it on every re-render).
+        const href = (websitesCard.getAttribute("href") || "").replace(/\.$/, "");
+        if (href !== WEBSITES_HREF && !href.endsWith("/projects/websites")) {
+          websitesCard.setAttribute("href", WEBSITES_HREF);
+        }
+        return;
+      }
+
+      const template = groupCards[0];
+      const templateContainer = template.parentElement;
+      if (!templateContainer || !templateContainer.parentElement) return;
+
+      const clone = templateContainer.cloneNode(true);
+
+      // The template's wrapping "-container" div was mid scroll-reveal
+      // (Framer Motion fades each card in from opacity:0 via
+      // IntersectionObserver) at clone time, so the clone can inherit
+      // opacity:0 frozen in place forever — nothing observes a manually
+      // cloned node to ever animate it in. Force just this one wrapper's
+      // opacity so it renders like a settled card. Deliberately NOT a
+      // blanket fix across all descendants: the hover "Arrow" reveal
+      // (data-framer-name="Arrow") is also opacity:0 by design and must
+      // stay that way until actually hovered.
+      clone.style.opacity = "1";
+
+      const cloneAnchor = clone.querySelector("a.framer-JqWh3");
+      if (!cloneAnchor) return;
+      cloneAnchor.setAttribute("href", WEBSITES_HREF);
+
+      const img = clone.querySelector("img");
+      if (img) {
+        img.setAttribute("src", WEBSITES_IMG);
+        img.removeAttribute("srcset");
+      }
+
+      const heading = clone.querySelector("h4");
+      if (heading) heading.textContent = "Websites";
+
+      templateContainer.parentElement.insertBefore(clone, templateContainer);
+    });
+  }
+
   // A "Project Card" whose link points back at the page it's already on
   // (e.g. a leftover "view all" tile inside /projects itself) makes no
   // sense there and, in a 2-column grid, leaves the real cards at an odd
@@ -1441,6 +1512,7 @@
     simplifyMoreProjectsSection();
     canonicalizeInternalLinks();
     removeSelfReferencingProjectCards();
+    ensureWebsitesProjectCard();
     injectLanguageSwitcher();
     applyTranslations();
     updateWhatsAppLinks();
@@ -1458,6 +1530,7 @@
         simplifyMoreProjectsSection();
         canonicalizeInternalLinks();
         removeSelfReferencingProjectCards();
+        ensureWebsitesProjectCard();
         injectLanguageSwitcher();
         applyTranslations();
         updateWhatsAppLinks();
