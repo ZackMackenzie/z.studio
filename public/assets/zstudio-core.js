@@ -27,8 +27,44 @@
   // the correct per-page <title> from the static HTML with that generic
   // value, repeatedly, for as long as the page stays open. Capture the
   // correct title here at script-parse time (before hydration can touch
-  // it) so applyTranslations() below can keep restoring it.
+  // it) so fixDocumentTitle() below can keep restoring it.
   const originalTitle = document.title;
+
+  const titleTranslations = {
+    "Z.studio - Design, tecnologia e desenvolvimento": { en: "Z.studio - Design, technology and development", es: "Z.studio - Diseño, tecnología y desarrollo" },
+    "Sobre - Z.studio": { en: "About - Z.studio", es: "Sobre mí - Z.studio" },
+    "Contato - Z.studio": { en: "Contact - Z.studio", es: "Contacto - Z.studio" },
+    "Projetos - Z.studio": { en: "Projects - Z.studio", es: "Proyectos - Z.studio" },
+    "Websites - Z.studio": { en: "Websites - Z.studio", es: "Sitios Web - Z.studio" },
+    "Identidade de Marca - Z.studio": { en: "Brand Identity - Z.studio", es: "Identidad de Marca - Z.studio" },
+    "SaaS / Produto - Z.studio": { en: "SaaS / Product - Z.studio", es: "SaaS / Producto - Z.studio" },
+    "Criativo & Ads - Z.studio": { en: "Creative & Ads - Z.studio", es: "Creatividad & Ads - Z.studio" }
+  };
+
+  // Restores the correct title, translating it if a known language other
+  // than PT is active. Shared by the immediate title observer below (so
+  // Framer's "Asher Vale" flash is corrected on the very next microtask,
+  // not left visible until the next debounced repair pass) and by
+  // applyTranslations()'s regular repair cycle (so a live language switch
+  // still updates the title).
+  function fixDocumentTitle() {
+    const lang = typeof getActiveLang === "function" ? getActiveLang() : "pt";
+    const translated = titleTranslations[originalTitle];
+    const desiredTitle = (lang !== "pt" && translated && translated[lang]) ? translated[lang] : originalTitle;
+    if (originalTitle && document.title !== desiredTitle) {
+      document.title = desiredTitle;
+    }
+  }
+
+  // Correct the title the instant Framer's runtime changes it, instead of
+  // waiting for the next debounced repair pass (previously up to ~900ms of
+  // a visibly wrong tab title on first load).
+  if (originalTitle) {
+    const titleEl = document.querySelector("head > title");
+    if (titleEl) {
+      new MutationObserver(fixDocumentTitle).observe(titleEl, { childList: true, characterData: true, subtree: true });
+    }
+  }
 
   const WA_NUMBER = "5511914406822";
 
@@ -551,30 +587,10 @@
   function applyTranslations() {
     const lang = getActiveLang();
 
-    // 1. Document Title
-    // Framer's runtime doesn't reliably include page-identifying text when
-    // it overwrites document.title (see the originalTitle capture at the
-    // top of this file for why) — Home/About/Contact/Projects just get the
-    // generic site name, not something safely pattern-matchable. Instead,
-    // always resolve from the captured original PT-BR title, translating
-    // it only if this exact title is a known one and the active language
-    // isn't PT. This self-corrects regardless of what Framer's runtime did
-    // to document.title in between, and needs no per-page URL matching.
-    const titleTranslations = {
-      "Z.studio - Design, tecnologia e desenvolvimento": { en: "Z.studio - Design, technology and development", es: "Z.studio - Diseño, tecnología y desarrollo" },
-      "Sobre - Z.studio": { en: "About - Z.studio", es: "Sobre mí - Z.studio" },
-      "Contato - Z.studio": { en: "Contact - Z.studio", es: "Contacto - Z.studio" },
-      "Projetos - Z.studio": { en: "Projects - Z.studio", es: "Proyectos - Z.studio" },
-      "Websites - Z.studio": { en: "Websites - Z.studio", es: "Sitios Web - Z.studio" },
-      "Identidade de Marca - Z.studio": { en: "Brand Identity - Z.studio", es: "Identidad de Marca - Z.studio" },
-      "SaaS / Produto - Z.studio": { en: "SaaS / Product - Z.studio", es: "SaaS / Producto - Z.studio" },
-      "Criativo & Ads - Z.studio": { en: "Creative & Ads - Z.studio", es: "Creatividad & Ads - Z.studio" }
-    };
-    const translated = titleTranslations[originalTitle];
-    const desiredTitle = (lang !== "pt" && translated && translated[lang]) ? translated[lang] : originalTitle;
-    if (originalTitle && document.title !== desiredTitle) {
-      document.title = desiredTitle;
-    }
+    // 1. Document Title (also corrected immediately by the MutationObserver
+    // set up near the top of this file — this call just covers a live
+    // language switch, which doesn't itself mutate <title>).
+    fixDocumentTitle();
 
     // 2. Walk text nodes and elements
     const walker = document.createTreeWalker(
@@ -1030,8 +1046,10 @@
         wrap.replaceChild(div, el);
         el = div;
       }
+      // Sized to match the visual weight of the adjacent arrow icon
+      // (~94px/50px tall at these breakpoints), not an arbitrary value.
       const desktop = window.matchMedia("(min-width: 1200px)").matches;
-      const correctSize = desktop ? "32px" : "20px";
+      const correctSize = desktop ? "90px" : "48px";
       if (el.style.fontSize !== correctSize) el.style.fontSize = correctSize;
     });
 
