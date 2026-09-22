@@ -124,22 +124,41 @@
      client-side route transitions happen here), so a plain autoplaying
      CSS animation -- no JS, nothing to wire up per-route -- is all this
      needs; it naturally replays correctly on every real navigation. */
-  @keyframes zstudio-elevacao {
-    from { opacity: 0; transform: translateY(14px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
   #main, footer {
-    animation: zstudio-elevacao 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+    opacity: 0;
+    transform: translateY(14px);
+    transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
   }
-  footer {
-    animation-delay: 0.09s;
+  #main.zstudio-elevated, footer.zstudio-elevated {
+    opacity: 1;
+    transform: none;
+  }
+  footer.zstudio-elevated {
+    transition-delay: 0.09s;
   }
   @media (prefers-reduced-motion: reduce) {
     #main, footer {
-      animation: none !important;
+      transition: none !important;
       opacity: 1 !important;
       transform: none !important;
     }
+  }
+
+  /* Project-detail pages only: the hero wrapper above "Voltar" and the
+     intro paragraph (.framer-mgkxuy) carries 160px of top padding on
+     desktop and 96px on mobile -- Framer's own authored spacing, not
+     something added by any previous fix here -- which read as an
+     excessive gap under the header. Halved at both breakpoints (still a
+     deliberate, visible margin, just not an oversized one); the tablet
+     value (810-1199.98px, already just 17px) was already small and is
+     left untouched. Overrides the exact same class + media-query
+     breakpoints Framer's own stylesheet uses, so it only ever affects
+     this one spacer, at the same responsive boundaries already in place. */
+  @media (min-width: 1200px) {
+    .framer-mgkxuy { padding-top: 72px !important; }
+  }
+  @media (max-width: 809.98px) {
+    .framer-mgkxuy { padding-top: 44px !important; }
   }
 
 

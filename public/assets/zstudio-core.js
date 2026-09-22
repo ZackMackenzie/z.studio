@@ -766,6 +766,26 @@
     if (badge) badge.remove();
   }
 
+  // Triggers the "Elevacao" entrance transition (see the CSS comment on
+  // #main/footer in each page's zstudio-overrides block) by adding a class
+  // two animation frames after this runs. The double rAF ensures the
+  // browser has actually painted the pre-transition state (opacity:0)
+  // at least once before the class flips it, so it transitions instead of
+  // jumping straight to the end state with nothing visible in between.
+  // footer isn't always present the first time this runs (hydration adds
+  // it late on some pages), so this only touches elements that exist and
+  // don't have the class yet -- safe to call again from the repair cycle.
+  function triggerElevacao() {
+    const targets = [document.getElementById("main"), document.querySelector("footer")]
+      .filter(el => el && !el.classList.contains("zstudio-elevated"));
+    if (targets.length === 0) return;
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        targets.forEach(el => el.classList.add("zstudio-elevated"));
+      });
+    });
+  }
+
   // Remove incorrect location and time ("London, UK", "5:29 PM", "6:39 PM")
   function removeLocationAndTime() {
     document.querySelectorAll('[data-framer-name="Time"]').forEach(el => {
@@ -1802,6 +1822,7 @@
 
   // Initial Boot
   function init() {
+    triggerElevacao();
     removeLocationAndTime();
     cleanupStructuralDuplicates();
     simplifyMoreProjectsSection();
@@ -1835,6 +1856,7 @@
 
       clearTimeout(debounceTimer);
       debounceTimer = setTimeout(() => {
+        triggerElevacao();
         removeLocationAndTime();
         cleanupStructuralDuplicates();
         simplifyMoreProjectsSection();

@@ -129,27 +129,43 @@
      cards/paragraphs inside them. Those already run their own Framer
      Motion scroll-reveal animations; animating each one separately here
      too would double-animate the same content and look busy instead of
-     calm. Per the CSS cascade, a running animation's own keyframe values
-     take precedence over inline styles for the properties it's
-     animating, so this doesn't need !important even though Framer sets
-     inline "opacity"/"transform" styles on plenty of elements elsewhere.
-     Every route on this site is a full page load (verified: no
-     client-side route transitions happen here), so a plain autoplaying
-     CSS animation -- no JS, nothing to wire up per-route -- is all this
-     needs; it naturally replays correctly on every real navigation. */
-  @keyframes zstudio-elevacao {
-    from { opacity: 0; transform: translateY(14px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
+     calm.
+
+     This is a CSS TRANSITION triggered by a class (zstudio-core.js adds
+     .zstudio-elevated two frames after load), not a @keyframes animation
+     -- deliberately. A CSS animation's fill-mode (forwards/both) keeps
+     the element under the animation's control indefinitely to hold the
+     end state, and for as long as that's true, `transform` counts as "a
+     transform is present" for the containing-block rule EVEN WHEN the
+     held value is translateY(0)/none -- it still computes to a matrix,
+     never the literal keyword none. #main wraps the entire page,
+     including Framer's own position:fixed cursor-follow element, and a
+     non-none transform on an ancestor makes IT the containing block for
+     fixed descendants instead of the viewport -- so the cursor pill
+     tracked #main's box, which scrolls with the page, instead of the
+     viewport: it drifted off-screen by roughly the scroll distance on
+     any page tall enough to scroll (confirmed: this exact symptom
+     appeared only after this animation was added, and disappeared the
+     instant transform was forced to literally "none" instead of an
+     identity matrix). A transition has no fill-mode/hold concept --
+     once it finishes, the element's transform is just whatever the
+     cascade says, which is this class's plain "none", so it genuinely
+     stops being a containing block afterward. */
   #main, footer {
-    animation: zstudio-elevacao 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+    opacity: 0;
+    transform: translateY(14px);
+    transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
   }
-  footer {
-    animation-delay: 0.09s;
+  #main.zstudio-elevated, footer.zstudio-elevated {
+    opacity: 1;
+    transform: none;
+  }
+  footer.zstudio-elevated {
+    transition-delay: 0.09s;
   }
   @media (prefers-reduced-motion: reduce) {
     #main, footer {
-      animation: none !important;
+      transition: none !important;
       opacity: 1 !important;
       transform: none !important;
     }
