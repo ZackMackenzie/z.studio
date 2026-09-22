@@ -106,6 +106,42 @@
     color: #0a0a0a !important;
   }
 
+  /* "Elevacao": the page's real content and its footer rise gently into
+     place on load (opacity 0->1 + a small translateY) instead of just
+     appearing. GPU-only properties (transform + opacity, never
+     width/height/top/left), so it can't trigger layout or a forced
+     reflow. Scoped to the two containers every page already has exactly
+     one of -- #main (a plain wrapper div, direct child of body, holding
+     the entire page) and its one <footer> -- not to individual
+     cards/paragraphs inside them. Those already run their own Framer
+     Motion scroll-reveal animations; animating each one separately here
+     too would double-animate the same content and look busy instead of
+     calm. Per the CSS cascade, a running animation's own keyframe values
+     take precedence over inline styles for the properties it's
+     animating, so this doesn't need !important even though Framer sets
+     inline "opacity"/"transform" styles on plenty of elements elsewhere.
+     Every route on this site is a full page load (verified: no
+     client-side route transitions happen here), so a plain autoplaying
+     CSS animation -- no JS, nothing to wire up per-route -- is all this
+     needs; it naturally replays correctly on every real navigation. */
+  @keyframes zstudio-elevacao {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  #main, footer {
+    animation: zstudio-elevacao 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  footer {
+    animation-delay: 0.09s;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    #main, footer {
+      animation: none !important;
+      opacity: 1 !important;
+      transform: none !important;
+    }
+  }
+
 
   /* The "Websites" card's DOM node is JS-cloned on this page (see
      ensureWebsitesProjectCard() in zstudio-core.js — hydration sometimes

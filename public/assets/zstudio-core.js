@@ -496,9 +496,20 @@
     },
 
     // Footer & Common
-    "Pronto para melhorar seu negócio? Vamos começar.": {
-      en: "Ready to elevate your business? Let's begin.",
-      es: "¿Listo para impulsar tu negocio? Empecemos."
+    // Rendered as two separate <p> siblings, not one string — a combined
+    // key here never matches either paragraph's own (shorter) text node,
+    // so neither half ever got translated. Split to match the real DOM.
+    "Pronto para melhorar seu negócio?": {
+      en: "Ready to elevate your business?",
+      es: "¿Listo para impulsar tu negocio?"
+    },
+    "Vamos começar.": {
+      en: "Let's begin.",
+      es: "Empecemos."
+    },
+    "Built in": {
+      en: "Built in",
+      es: "Hecho en"
     },
     "© 2026  - Z.studio": {
       en: "© 2026 - Z.studio",
@@ -743,6 +754,18 @@
     });
   }
 
+  // Defensive cleanup matching the existing CSS rule for this same target
+  // (#template-overlay / #__framer-badge-container / .__framer-badge,
+  // already hidden via display:none elsewhere in this file) — Framer's
+  // "Made with Framer" watermark, on any build/plan where it's present.
+  // It doesn't currently render on this export (confirmed empty), so this
+  // is a no-op today; kept so a hidden-but-still-mounted copy doesn't add
+  // dead DOM weight if a future republish ever brings it back.
+  function removeFramerBadge() {
+    const badge = document.getElementById("__framer-badge-container");
+    if (badge) badge.remove();
+  }
+
   // Remove incorrect location and time ("London, UK", "5:29 PM", "6:39 PM")
   function removeLocationAndTime() {
     document.querySelectorAll('[data-framer-name="Time"]').forEach(el => {
@@ -889,8 +912,24 @@
       grids.get(grid).push(a);
     });
 
+    // Locale-aware: this repair cycle also runs applyTranslations() later in
+    // the SAME pass, which rewrites this exact card's heading to the active
+    // language. A PT/EN-only literal check ("Websites") stops matching the
+    // instant the heading reads "Sitios Web" (the ES translation — EN is
+    // coincidentally identical to the PT source, which is why this bug only
+    // ever showed up in Spanish) and concludes the real card is "missing" on
+    // every subsequent pass — cloning a fresh one, which the same pass's
+    // applyTranslations() immediately re-translates to Spanish again,
+    // re-triggering the very same false "missing" detection next pass. That
+    // clone-detect-clone feedback loop is what produced a dozen-plus
+    // duplicate cards from a single language switch. Matching against every
+    // language's translation (sourced from the same DICTIONARY
+    // applyTranslations() itself uses, so it can't drift out of sync) fixes
+    // the detection at its root instead of just cleaning up the symptom.
+    const websitesLabels = new Set(["Websites", (DICTIONARY.Websites && DICTIONARY.Websites.en) || "Websites", (DICTIONARY.Websites && DICTIONARY.Websites.es) || "Sitios Web"]);
+
     grids.forEach((groupCards, grid) => {
-      const websitesMatches = groupCards.filter(a => a.textContent.trim() === "Websites");
+      const websitesMatches = groupCards.filter(a => websitesLabels.has(a.textContent.trim()));
       if (websitesMatches.length > 1) {
         // Under real network timing (slower than a local build), React's
         // reconciliation of the 3-item bound collection against this
@@ -1032,18 +1071,28 @@
   // photos elsewhere (the /projects grid, each project's own hero image)
   // intentionally keep their original crop-free "contain" treatment and
   // are untouched.
+  // Keyed by href (stable across languages), not the card's visible heading
+  // text — that text is rewritten to the active language by
+  // applyTranslations() elsewhere in the same repair cycle, so a
+  // heading-text key silently stopped matching (and stopped re-applying
+  // these cover-fit images) the moment the page wasn't in Portuguese.
+  // Dimensions match the actual files on disk (resized from the original
+  // 3000-4800px-wide sources, which were ~9x more pixel area than any real
+  // rendered size ever needs — max CSS render width measured across
+  // 390/768/1440/1920 is 736px, so 1600px covers even 2x-DPR displays with
+  // margin). Width/height stay in sync with the files themselves so the
+  // browser's own intrinsic-size aspect ratio hint stays accurate.
   const HOME_THUMBNAILS = {
-    "Websites": { src: "/assets/framerusercontent.com/images/zstudio-home-thumb-websites.jpg", w: 4800, h: 3584 },
-    "Identidade de Marca": { src: "/assets/framerusercontent.com/images/zstudio-home-thumb-identidade.jpg", w: 4696, h: 3584 },
-    "Criativo & Ads": { src: "/assets/framerusercontent.com/images/zstudio-home-thumb-criativo.jpg", w: 3072, h: 5572 },
-    "SaaS / Produto": { src: "/assets/framerusercontent.com/images/zstudio-home-thumb-saas.jpg", w: 4572, h: 3712 }
+    "/projects/websites": { src: "/assets/framerusercontent.com/images/zstudio-home-thumb-websites.jpg", w: 1600, h: 1195 },
+    "/projects/sistemas-de-marca-que-se-sustentam-em-qualquer-lugar": { src: "/assets/framerusercontent.com/images/zstudio-home-thumb-identidade.jpg", w: 1600, h: 1221 },
+    "/projects/criativo-de-performance-que-não-parece-um-anúncio": { src: "/assets/framerusercontent.com/images/zstudio-home-thumb-criativo.jpg", w: 1600, h: 2902 },
+    "/projects/produto-completo-—-landing-dashboard-e-tudo-entre-os-dois": { src: "/assets/framerusercontent.com/images/zstudio-home-thumb-saas.jpg", w: 1600, h: 1299 }
   };
   function ensureHomeThumbnailsFillSquares() {
     if (window.location.pathname !== "/") return;
-    document.querySelectorAll('a.framer-JqWh3').forEach(a => {
-      const heading = a.querySelector("h3, h4");
-      const name = heading ? heading.textContent.trim() : null;
-      const target = HOME_THUMBNAILS[name];
+    document.querySelectorAll('a.framer-JqWh3[href]').forEach(a => {
+      const href = (a.getAttribute("href") || "").replace(/\.$/, "");
+      const target = HOME_THUMBNAILS[href];
       if (!target) return;
       const img = a.querySelector("img");
       if (!img) return;
@@ -1766,6 +1815,7 @@
     applyTranslations();
     updateWhatsAppLinks();
     removeSocialLinks();
+    removeFramerBadge();
     injectContactWhatsAppCard();
     initContactForm();
 
@@ -1798,6 +1848,7 @@
         applyTranslations();
         updateWhatsAppLinks();
         removeSocialLinks();
+        removeFramerBadge();
         injectContactWhatsAppCard();
         initContactForm();
       }, 50);

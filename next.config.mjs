@@ -68,6 +68,20 @@ const nextConfig = {
   async rewrites() {
     return {
       beforeFiles: [
+        // Framer's runtime unconditionally pings this on every page load to
+        // detect whether it's being viewed inside Framer's own editor canvas
+        // (for the in-context "Edit Bar" overlay). On Framer's own hosting
+        // that path is served dynamically at the framer.com origin; here,
+        // self-hosted on Vercel, nothing answers it — a real 404 on every
+        // single page load, logged as a console error by every Lighthouse
+        // run. We're never inside that editor, so the response content
+        // genuinely doesn't matter; only resolving to 200 instead of 404
+        // does. Scoped to this exact bare path only — the real static asset
+        // at /assets/framer.com/edit/init.mjs is untouched.
+        {
+          source: "/assets/framer.com/edit",
+          destination: "/assets/framer-editor-noop.json",
+        },
         {
           source: "/",
           destination: "/index.html",
