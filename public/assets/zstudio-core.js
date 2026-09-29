@@ -1217,6 +1217,22 @@
     });
   }
 
+  // The /projects page ships its own separate, unrelated "CTA" element: a
+  // floating sticky button (Framer Motion appear animation, bottom-right,
+  // springs into view 2s after load) that is completely empty in the
+  // static export -- no icon, text, or link ever made it into the HTML.
+  // Once its entrance animation finishes, it's just a bare opaque black
+  // box, fixed in place, landing on top of whatever project card happens
+  // to be scrolled underneath it. There's no content to preserve, so it's
+  // removed outright rather than patched.
+  function removeEmptyFloatingCTA() {
+    document.querySelectorAll('div[data-framer-name="CTA"]').forEach(div => {
+      if (div.children.length === 0 && getComputedStyle(div).position === "fixed") {
+        div.remove();
+      }
+    });
+  }
+
   // A "Project Card" whose link points back at the page it's already on
   // (e.g. a leftover "view all" tile inside /projects itself) makes no
   // sense there and, in a 2-column grid, leaves the real cards at an odd
@@ -1544,6 +1560,19 @@
           align-items: center !important;
           width: 100% !important;
           padding: 32px 0 !important;
+        }
+        /* The link itself was moved here out of a "-container" wrapper (see
+           simplifyMoreProjectsSection) that supplied its real sizing as a
+           percentage of the original "Mais projetos" grid cell -- on the
+           mobile breakpoint specifically, that percentage resolved to
+           something close to the full viewport width, so without that
+           wrapper the relocated button rendered edge-to-edge instead of as
+           the compact pill it is everywhere else on the site. Forcing it
+           back to its own content size here is what the pill actually
+           looks like at every other breakpoint. */
+        .zstudio-more-projects-cta > a {
+          width: fit-content !important;
+          flex: none !important;
         }
 
         @media (max-width: 600px) {
@@ -1873,6 +1902,7 @@
     ensureHomeThumbnailsFillSquares();
     fixHeadingSemantics();
     removeComecarCTAExceptHome();
+    removeEmptyFloatingCTA();
     injectLanguageSwitcher();
     applyTranslations();
     updateWhatsAppLinks();
@@ -1908,6 +1938,7 @@
         ensureHomeThumbnailsFillSquares();
         fixHeadingSemantics();
         removeComecarCTAExceptHome();
+        removeEmptyFloatingCTA();
         injectLanguageSwitcher();
         applyTranslations();
         updateWhatsAppLinks();
