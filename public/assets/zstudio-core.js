@@ -56,13 +56,29 @@
     }
   }
 
-  // Correct the title the instant Framer's runtime changes it, instead of
-  // waiting for the next debounced repair pass (previously up to ~900ms of
-  // a visibly wrong tab title on first load).
+  // Reactive correction (a MutationObserver reverting document.title after
+  // Framer's runtime had already written "Asher Vale" to it) still let the
+  // wrong value land in the tab first, for however long it took the
+  // observer's microtask to fire -- confirmed via instrumentation to be a
+  // real, visible flash, not just a theoretical race. Intercepting the
+  // document.title setter itself closes that gap to zero: Framer's write
+  // is rewritten before it ever reaches the tab, instead of being chased
+  // afterward. Framer was confirmed (by that same instrumentation) to set
+  // it via `document.title = ...`, not direct <title> node manipulation,
+  // so overriding the accessor here catches every write.
   if (originalTitle) {
-    const titleEl = document.querySelector("head > title");
-    if (titleEl) {
-      new MutationObserver(fixDocumentTitle).observe(titleEl, { childList: true, characterData: true, subtree: true });
+    const titleDescriptor = Object.getOwnPropertyDescriptor(Document.prototype, "title");
+    if (titleDescriptor && titleDescriptor.set) {
+      Object.defineProperty(document, "title", {
+        configurable: true,
+        get: function() { return titleDescriptor.get.call(document); },
+        set: function(value) {
+          const lang = typeof getActiveLang === "function" ? getActiveLang() : "pt";
+          const translated = titleTranslations[originalTitle];
+          const desiredTitle = (lang !== "pt" && translated && translated[lang]) ? translated[lang] : originalTitle;
+          titleDescriptor.set.call(document, value === desiredTitle ? value : desiredTitle);
+        }
+      });
     }
   }
 
@@ -430,7 +446,12 @@
       en: "Upon request",
       es: "Bajo consulta"
     },
+    // The source content itself has a typo here ("Autação", missing "om") --
+    // the en/es values below are what the label actually means, confirmed
+    // by their meaning ("Automation"). A `pt` override corrects the default
+    // PT-BR display too, not just the en/es translations (see translateText).
     "Autação": {
+      pt: "Automação",
       en: "Automation",
       es: "Automatización"
     },
@@ -534,6 +555,11 @@
   for (const [ptKey, trans] of Object.entries(DICTIONARY)) {
     if (trans.en) REVERSE_LOOKUP[trans.en.trim()] = ptKey;
     if (trans.es) REVERSE_LOOKUP[trans.es.trim()] = ptKey;
+    // A `.pt` override rewrites the DOM's text to the corrected spelling
+    // (see translateText), so that corrected text also needs to resolve
+    // back to this entry -- otherwise a later switch to en/es after the
+    // pt correction has already landed finds no match at all.
+    if (trans.pt) REVERSE_LOOKUP[trans.pt.trim()] = ptKey;
   }
 
   function getActiveLang() {
@@ -581,14 +607,14 @@
 
     // Direct match with PT original
     if (DICTIONARY[clean]) {
-      if (targetLang === "pt") return clean;
+      if (targetLang === "pt") return DICTIONARY[clean].pt || clean;
       return DICTIONARY[clean][targetLang] || clean;
     }
 
     // Match via reverse lookup if text was previously translated
     if (REVERSE_LOOKUP[clean]) {
       const ptOriginal = REVERSE_LOOKUP[clean];
-      if (targetLang === "pt") return ptOriginal;
+      if (targetLang === "pt") return (DICTIONARY[ptOriginal] && DICTIONARY[ptOriginal].pt) || ptOriginal;
       return (DICTIONARY[ptOriginal] && DICTIONARY[ptOriginal][targetLang]) || clean;
     }
 
@@ -1174,6 +1200,20 @@
       Array.from(h4.attributes).forEach(a => h3.setAttribute(a.name, a.value));
       h3.innerHTML = h4.innerHTML;
       h4.replaceWith(h3);
+    });
+  }
+
+  // The "Começar" CTA section is a shared Framer component that hydrates
+  // client-side onto both Home and About (it's never present in About's
+  // static HTML source, only mounted by React after load) -- per request,
+  // it should only ever show on Home. Removing the whole `data-framer-name
+  // ="CTA"` section, not just the button inside it, is what avoids leaving
+  // an empty gap: that section is a self-contained sibling in the page's
+  // vertical stack of <main>, so removing it collapses the layout cleanly.
+  function removeComecarCTAExceptHome() {
+    if (location.pathname === "/" || location.pathname === "/index.html") return;
+    document.querySelectorAll('section[data-framer-name="CTA"]').forEach(section => {
+      if (section.querySelector("a.framer-GYusQ")) section.remove();
     });
   }
 
@@ -1832,6 +1872,7 @@
     ensureDesktopWordRow();
     ensureHomeThumbnailsFillSquares();
     fixHeadingSemantics();
+    removeComecarCTAExceptHome();
     injectLanguageSwitcher();
     applyTranslations();
     updateWhatsAppLinks();
@@ -1866,6 +1907,7 @@
         ensureDesktopWordRow();
         ensureHomeThumbnailsFillSquares();
         fixHeadingSemantics();
+        removeComecarCTAExceptHome();
         injectLanguageSwitcher();
         applyTranslations();
         updateWhatsAppLinks();
