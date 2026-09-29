@@ -15,18 +15,6 @@
  */
 
 (function() {
-  // The Home page's word-row ("Aplicativos", "Design de produtos", ...)
-  // ships as two mutually exclusive Framer breakpoint variants: a
-  // Desktop-only absolute-positioned scatter ("Gravity") and a
-  // Tablet/Mobile continuous ticker row. React's hydration unmounts
-  // whichever variant doesn't match the real viewport within ~300ms of
-  // DOMContentLoaded, so on Desktop the ticker row is gone from the DOM
-  // long before any post-hydration repair pass could run. Capture its
-  // markup here, synchronously, at script-parse time — this script is
-  // deferred, so it always executes before DOMContentLoaded/hydration.
-  let capturedWordTickerHTML = null;
-  const earlyWordTicker = document.querySelector(".framer-nksdxl");
-  if (earlyWordTicker) capturedWordTickerHTML = earlyWordTicker.outerHTML;
 
   // Framer's own runtime sets document.title on every page after
   // hydration, independent of anything in this file — but on the top-level
@@ -788,17 +776,21 @@
     });
   }
 
-  // Defensive cleanup matching the existing CSS rule for this same target
-  // (#template-overlay / #__framer-badge-container / .__framer-badge,
-  // already hidden via display:none elsewhere in this file) — Framer's
-  // "Made with Framer" watermark, on any build/plan where it's present.
-  // It doesn't currently render on this export (confirmed empty), so this
-  // is a no-op today; kept so a hidden-but-still-mounted copy doesn't add
-  // dead DOM weight if a future republish ever brings it back.
-  function removeFramerBadge() {
-    const badge = document.getElementById("__framer-badge-container");
-    if (badge) badge.remove();
-  }
+  // REMOVED (was: badge.remove() on #__framer-badge-container). That
+  // element isn't just an empty leftover -- Framer's own bootstrap
+  // (script_main) hydrates a separate React root into it on a deferred
+  // startTransition, well after this file's own init() already ran and
+  // removed the node. Deleting it out from under that later hydrateRoot()
+  // call is exactly "Minified React error #405: Target container is not
+  // a DOM element" (confirmed by disabling this one function alone, with
+  // every other repair function still active: the error disappears).
+  // The badge was already fully invisible without any of this -- a CSS
+  // rule from the export tool itself (#__framer-badge-container,
+  // .__framer-badge{display:none!important}, in every page's own
+  // <style id="f2c-strip-framer-badge">) hides it regardless, and
+  // hydrating into a display:none element is completely normal. So this
+  // function bought nothing visually and only introduced a real error;
+  // removing it is a pure fix, not a tradeoff.
 
   // Triggers the "Elevacao" entrance transition (see the CSS comment on
   // #main/footer in each page's zstudio-overrides block) by adding a class
@@ -1064,52 +1056,25 @@
     });
   }
 
-  // Restores the word-row ticker on Desktop, since hydration unmounts it
-  // there (see the capture at the top of this file) — the CSS override
-  // that hides the physics scatter and shows the ticker only has an
-  // effect if the ticker element actually exists in the DOM. The ticker
-  // is normally a child of the shared .framer-1u5je0q wrapper (alongside
-  // the now-always-hidden scatter container), so it's restored there,
-  // matching its original nesting.
-  function ensureDesktopWordRow() {
-    if (!capturedWordTickerHTML) return;
-    if (document.querySelector(".framer-nksdxl")) return;
-    const wrapper = document.querySelector(".framer-1u5je0q");
-    if (!wrapper) return;
-    const holder = document.createElement("div");
-    holder.innerHTML = capturedWordTickerHTML;
-    const restored = holder.firstElementChild;
-    if (!restored) return;
-
-    // The ticker's <ul> starts at opacity:0 and only fades in via a scroll
-    // IntersectionObserver React attaches to the ORIGINAL node — a cloned
-    // node has no observer watching it, so it would stay invisible forever
-    // (same class of bug fixed for the Websites card clone above).
-    const list = restored.querySelector("ul");
-    if (list) {
-      list.style.opacity = "1";
-
-      // The continuous scroll itself is driven by JS updating this exact
-      // <ul>'s inline transform every frame (not a CSS animation), so a
-      // cloned node never moves on its own. Duplicate its items once and
-      // drive a plain CSS keyframe loop instead — a standard seamless
-      // marquee technique, and the only way to keep it "continuous" here
-      // without hand-rolling a requestAnimationFrame loop.
-      const items = Array.from(list.children);
-      items.forEach(li => list.appendChild(li.cloneNode(true)));
-      list.style.transform = "";
-      list.classList.add("zstudio-word-row-loop");
-      if (!document.getElementById("zstudio-word-row-style")) {
-        const style = document.createElement("style");
-        style.id = "zstudio-word-row-style";
-        style.textContent = "@keyframes zstudio-word-row-scroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}" +
-          ".zstudio-word-row-loop{animation:zstudio-word-row-scroll 22s linear infinite}";
-        document.head.appendChild(style);
-      }
-    }
-
-    wrapper.appendChild(restored);
-  }
+  // REMOVED (was: ensureDesktopWordRow(), a clone-and-reinsert workaround
+  // for the word-row ticker allegedly being missing on Desktop after
+  // hydration). Root-caused to a real, measurable CLS regression: Framer's
+  // hydration removes the ticker on Desktop, this function reinserted a
+  // clone, and then Framer's own reconciliation -- not recognizing that
+  // foreign node -- removed it again, which triggered this function to
+  // reinsert it again. Two full cycles of that were directly visible in
+  // #main's height (oscillating by 700+px) before things settled, and
+  // disabling only this one function (every other repair function still
+  // active) took measured desktop CLS from ~0.09 to 0.0000.
+  // Verified the underlying bug this was working around no longer exists
+  // -- at 1440px the Desktop scatter animation renders all the words
+  // correctly on its own with this function fully disabled, at ~900px the
+  // ticker appears natively without any restoration, and Mobile was
+  // already unaffected (different DOM structure entirely). Whatever
+  // hydration timing this originally compensated for was most likely
+  // fixed as a side effect of removing the service worker earlier this
+  // session; keeping a workaround for a bug that no longer reproduces was
+  // pure downside.
 
   // Home's 4 service-preview thumbnails ("Websites", "Identidade de
   // Marca", "Criativo & Ads", "SaaS / Produto") sit in fixed-size boxes
@@ -1942,7 +1907,6 @@
     canonicalizeInternalLinks();
     removeSelfReferencingProjectCards();
     ensureWebsitesProjectCard();
-    ensureDesktopWordRow();
     ensureHomeThumbnailsFillSquares();
     fixHeadingSemantics();
     fixBrandCasing();
@@ -1952,7 +1916,6 @@
     applyTranslations();
     updateWhatsAppLinks();
     removeSocialLinks();
-    removeFramerBadge();
     injectContactWhatsAppCard();
     initContactForm();
 
@@ -1979,7 +1942,6 @@
         canonicalizeInternalLinks();
         removeSelfReferencingProjectCards();
         ensureWebsitesProjectCard();
-        ensureDesktopWordRow();
         ensureHomeThumbnailsFillSquares();
         fixHeadingSemantics();
         fixBrandCasing();
@@ -1989,7 +1951,6 @@
         applyTranslations();
         updateWhatsAppLinks();
         removeSocialLinks();
-        removeFramerBadge();
         injectContactWhatsAppCard();
         initContactForm();
       }, 50);
