@@ -139,6 +139,17 @@ const nextConfig = {
           { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
         ],
       },
+      {
+        // Vercel's default HSTS header on the *.vercel.app domain includes
+        // includeSubDomains/preload; a newly-added custom domain didn't
+        // inherit that stronger policy (Lighthouse flagged this gap
+        // specifically after the custom domain was connected). Applying it
+        // explicitly, site-wide, matches the same header on both domains.
+        source: "/:path*",
+        headers: [
+          { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
+        ],
+      },
     ];
   },
 };

@@ -1,5 +1,5 @@
 /**
- * Z.studio Core Engine
+ * z.studio Core Engine
  * - 3-Language System (PT-BR default, EN, ES) with persistence
  * - Direct WhatsApp integration (+55 11 91440-6822) with contextual pre-filled messages
  * - Complete removal of external social links
@@ -23,7 +23,7 @@
   // Framer's own runtime sets document.title on every page after
   // hydration, independent of anything in this file — but on the top-level
   // pages (Home/About/Contact/Projects) it only knows the site's internal
-  // project name ("Asher Vale", never renamed to Z.studio) and overwrites
+  // project name ("Asher Vale", never renamed to z.studio) and overwrites
   // the correct per-page <title> from the static HTML with that generic
   // value, repeatedly, for as long as the page stays open. Capture the
   // correct title here at script-parse time (before hydration can touch
@@ -31,14 +31,14 @@
   const originalTitle = document.title;
 
   const titleTranslations = {
-    "Z.studio - Design, tecnologia e desenvolvimento": { en: "Z.studio - Design, technology and development", es: "Z.studio - Diseño, tecnología y desarrollo" },
-    "Sobre - Z.studio": { en: "About - Z.studio", es: "Sobre mí - Z.studio" },
-    "Contato - Z.studio": { en: "Contact - Z.studio", es: "Contacto - Z.studio" },
-    "Projetos - Z.studio": { en: "Projects - Z.studio", es: "Proyectos - Z.studio" },
-    "Websites - Z.studio": { en: "Websites - Z.studio", es: "Sitios Web - Z.studio" },
-    "Identidade de Marca - Z.studio": { en: "Brand Identity - Z.studio", es: "Identidad de Marca - Z.studio" },
-    "SaaS / Produto - Z.studio": { en: "SaaS / Product - Z.studio", es: "SaaS / Producto - Z.studio" },
-    "Criativo & Ads - Z.studio": { en: "Creative & Ads - Z.studio", es: "Creatividad & Ads - Z.studio" }
+    "z.studio - Design, tecnologia e desenvolvimento": { en: "z.studio - Design, technology and development", es: "z.studio - Diseño, tecnología y desarrollo" },
+    "Sobre - z.studio": { en: "About - z.studio", es: "Sobre mí - z.studio" },
+    "Contato - z.studio": { en: "Contact - z.studio", es: "Contacto - z.studio" },
+    "Projetos - z.studio": { en: "Projects - z.studio", es: "Proyectos - z.studio" },
+    "Websites - z.studio": { en: "Websites - z.studio", es: "Sitios Web - z.studio" },
+    "Identidade de Marca - z.studio": { en: "Brand Identity - z.studio", es: "Identidad de Marca - z.studio" },
+    "SaaS / Produto - z.studio": { en: "SaaS / Product - z.studio", es: "SaaS / Producto - z.studio" },
+    "Criativo & Ads - z.studio": { en: "Creative & Ads - z.studio", es: "Creatividad & Ads - z.studio" }
   };
 
   // Restores the correct title, translating it if a known language other
@@ -86,9 +86,9 @@
 
   const WA_MESSAGES = {
     general: {
-      pt: "Olá! Conheci a Z.studio e gostaria de conversar sobre um projeto.",
-      en: "Hello! I found Z.studio and would like to talk about a project.",
-      es: "¡Hola! Conocí Z.studio y me gustaría hablar sobre un proyecto."
+      pt: "Olá! Conheci a z.studio e gostaria de conversar sobre um projeto.",
+      en: "Hello! I found z.studio and would like to talk about a project.",
+      es: "¡Hola! Conocí z.studio y me gustaría hablar sobre un proyecto."
     },
     website: {
       pt: "Olá! Gostaria de conversar sobre um projeto de website.",
@@ -270,9 +270,9 @@
       en: "Zack Rodrigues",
       es: "Zack Rodrigues"
     },
-    "Eu sou o Zack, criador da Z.studio.": {
-      en: "I'm Zack, founder of Z.studio.",
-      es: "Soy Zack, fundador de Z.studio."
+    "Eu sou o Zack, criador da z.studio.": {
+      en: "I'm Zack, founder of z.studio.",
+      es: "Soy Zack, fundador de z.studio."
     },
     "Gosto de transformar ideias em coisas que realmente funcionam. Meu trabalho mistura design, tecnologia e criatividade , do conceito até a execução.": {
       en: "I love turning ideas into things that actually work. My work blends design, technology, and creativity—from early concept to final execution.",
@@ -294,9 +294,9 @@
       en: "Above all, I work closely and transparently. You don't need to arrive knowing every technical detail—I guide you through the journey to craft a solution that makes complete sense for your business.",
       es: "Y, sobre todo, me gusta construir todo de forma cercana y transparente. No necesitas saber con exactitud cada detalle técnico: te ayudo a trazar el camino y encontrar una solución que tenga pleno sentido para ti."
     },
-    "A Z.studio nasceu justamente disso: da vontade de criar, experimentar e construir algo que tenha impacto de verdade.": {
-      en: "Z.studio was born from this exact drive: the passion to create, experiment, and build experiences that deliver genuine impact.",
-      es: "Z.studio nació justamente de eso: de las ganas de crear, experimentar y construir soluciones que generen un impacto real."
+    "A z.studio nasceu justamente disso: da vontade de criar, experimentar e construir algo que tenha impacto de verdade.": {
+      en: "z.studio was born from this exact drive: the passion to create, experiment, and build experiences that deliver genuine impact.",
+      es: "z.studio nació justamente de eso: de las ganas de crear, experimentar y construir soluciones que generen un impacto real."
     },
     "Vamos conversar": {
       en: "Let's talk",
@@ -314,9 +314,9 @@
       en: "Founder & Creative Developer",
       es: "Fundador y Desarrollador Creativo"
     },
-    "Construção da Z.studio unindo design, tecnologia, desenvolvimento e motion para criar experiências digitais sob medida.": {
-      en: "Building Z.studio by fusing design, technology, engineering, and motion to deliver bespoke digital experiences.",
-      es: "Construcción de Z.studio uniendo diseño, tecnología, desarrollo y animación para crear experiencias digitales a medida."
+    "Construção da z.studio unindo design, tecnologia, desenvolvimento e motion para criar experiências digitais sob medida.": {
+      en: "Building z.studio by fusing design, technology, engineering, and motion to deliver bespoke digital experiences.",
+      es: "Construcción de z.studio uniendo diseño, tecnología, desarrollo y animación para crear experiencias digitales a medida."
     },
     "SaaS e Automação": {
       en: "SaaS & Automation",
@@ -532,13 +532,13 @@
       en: "Built in",
       es: "Hecho en"
     },
-    "© 2026  - Z.studio": {
-      en: "© 2026 - Z.studio",
-      es: "© 2026 - Z.studio"
+    "© 2026  - z.studio": {
+      en: "© 2026 - z.studio",
+      es: "© 2026 - z.studio"
     },
-    "© 2026 - Z.studio": {
-      en: "© 2026 - Z.studio",
-      es: "© 2026 - Z.studio"
+    "© 2026 - z.studio": {
+      en: "© 2026 - z.studio",
+      es: "© 2026 - z.studio"
     },
     "Built in Zack  Rodrigues": {
       en: "Crafted by Zack Rodrigues",
@@ -944,7 +944,7 @@
   // matches only the 4 real project card anchors.
   function ensureWebsitesProjectCard() {
     const WEBSITES_HREF = "/projects/websites";
-    const WEBSITES_IMG = "/assets/framerusercontent.com/images/HUTn1SLesaIuorSfHOln147tsA.0xnxfmu.jpg";
+    const WEBSITES_IMG = "/assets/framerusercontent.com/images/HUTn1SLesaIuorSfHOln147tsA.0xnxfmu.webp";
 
     const cards = Array.from(document.querySelectorAll('a.framer-JqWh3'));
     if (cards.length === 0) return;
@@ -1129,10 +1129,10 @@
   // margin). Width/height stay in sync with the files themselves so the
   // browser's own intrinsic-size aspect ratio hint stays accurate.
   const HOME_THUMBNAILS = {
-    "/projects/websites": { src: "/assets/framerusercontent.com/images/zstudio-home-thumb-websites.jpg", w: 1600, h: 1195 },
-    "/projects/sistemas-de-marca-que-se-sustentam-em-qualquer-lugar": { src: "/assets/framerusercontent.com/images/zstudio-home-thumb-identidade.jpg", w: 1600, h: 1221 },
-    "/projects/criativo-de-performance-que-não-parece-um-anúncio": { src: "/assets/framerusercontent.com/images/zstudio-home-thumb-criativo.jpg", w: 1600, h: 2902 },
-    "/projects/produto-completo-—-landing-dashboard-e-tudo-entre-os-dois": { src: "/assets/framerusercontent.com/images/zstudio-home-thumb-saas.jpg", w: 1600, h: 1299 }
+    "/projects/websites": { src: "/assets/framerusercontent.com/images/zstudio-home-thumb-websites.webp", w: 1600, h: 1195 },
+    "/projects/sistemas-de-marca-que-se-sustentam-em-qualquer-lugar": { src: "/assets/framerusercontent.com/images/zstudio-home-thumb-identidade.webp", w: 1600, h: 1221 },
+    "/projects/criativo-de-performance-que-não-parece-um-anúncio": { src: "/assets/framerusercontent.com/images/zstudio-home-thumb-criativo.webp", w: 1600, h: 2902 },
+    "/projects/produto-completo-—-landing-dashboard-e-tudo-entre-os-dois": { src: "/assets/framerusercontent.com/images/zstudio-home-thumb-saas.webp", w: 1600, h: 1299 }
   };
   function ensureHomeThumbnailsFillSquares() {
     if (window.location.pathname !== "/") return;
@@ -1201,6 +1201,32 @@
       h3.innerHTML = h4.innerHTML;
       h4.replaceWith(h3);
     });
+  }
+
+  // Per request, the brand name displays as "z.studio" (lowercase z)
+  // everywhere. <title>/meta already read correctly (fixDocumentTitle and
+  // the static HTML cover those), but the nav logo, footer, and body copy
+  // come from Framer's own internal site-name data, which still renders
+  // "Z.studio" on every hydration pass regardless of what the static HTML
+  // says -- the same class of bug as the "Autação"/"Asher Vale" fixes
+  // above. Unlike those, this needs a substring replace rather than a
+  // whole-string DICTIONARY match, since "Z.studio" sits inside otherwise
+  // unpredictable sentences ("criador da Z.studio.", "© 2026 - Z.studio").
+  function fixBrandCasing() {
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+      acceptNode: function(node) {
+        if (!node.nodeValue || node.nodeValue.indexOf("Z.studio") === -1) return NodeFilter.FILTER_REJECT;
+        const parent = node.parentElement;
+        if (!parent) return NodeFilter.FILTER_REJECT;
+        const tag = parent.tagName.toLowerCase();
+        if (tag === "script" || tag === "style" || tag === "noscript") return NodeFilter.FILTER_REJECT;
+        return NodeFilter.FILTER_ACCEPT;
+      }
+    });
+    let node;
+    while ((node = walker.nextNode())) {
+      node.nodeValue = node.nodeValue.split("Z.studio").join("z.studio");
+    }
   }
 
   // The "Começar" CTA section is a shared Framer component that hydrates
@@ -1807,11 +1833,11 @@
 
     let waMessage = "";
     if (lang === "en") {
-      waMessage = `Hello! My name is ${nameVal}.\nI would like to discuss a project with Z.studio.\n\n• Email: ${emailVal}\n• Investment range: ${budgetDisplay}\n• Message:\n${msgVal}`;
+      waMessage = `Hello! My name is ${nameVal}.\nI would like to discuss a project with z.studio.\n\n• Email: ${emailVal}\n• Investment range: ${budgetDisplay}\n• Message:\n${msgVal}`;
     } else if (lang === "es") {
-      waMessage = `¡Hola! Mi nombre es ${nameVal}.\nMe gustaría hablar sobre un proyecto con Z.studio.\n\n• Correo electrónico: ${emailVal}\n• Rango de inversión: ${budgetDisplay}\n• Mensaje:\n${msgVal}`;
+      waMessage = `¡Hola! Mi nombre es ${nameVal}.\nMe gustaría hablar sobre un proyecto con z.studio.\n\n• Correo electrónico: ${emailVal}\n• Rango de inversión: ${budgetDisplay}\n• Mensaje:\n${msgVal}`;
     } else {
-      waMessage = `Olá! Meu nome é ${nameVal}.\nGostaria de conversar sobre um projeto com a Z.studio.\n\n• E-mail: ${emailVal}\n• Faixa de investimento: ${budgetDisplay}\n• Mensagem:\n${msgVal}`;
+      waMessage = `Olá! Meu nome é ${nameVal}.\nGostaria de conversar sobre um projeto com a z.studio.\n\n• E-mail: ${emailVal}\n• Faixa de investimento: ${budgetDisplay}\n• Mensagem:\n${msgVal}`;
     }
 
     const waUrl = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(waMessage)}`;
@@ -1901,6 +1927,7 @@
     ensureDesktopWordRow();
     ensureHomeThumbnailsFillSquares();
     fixHeadingSemantics();
+    fixBrandCasing();
     removeComecarCTAExceptHome();
     removeEmptyFloatingCTA();
     injectLanguageSwitcher();
@@ -1937,6 +1964,7 @@
         ensureDesktopWordRow();
         ensureHomeThumbnailsFillSquares();
         fixHeadingSemantics();
+        fixBrandCasing();
         removeComecarCTAExceptHome();
         removeEmptyFloatingCTA();
         injectLanguageSwitcher();
