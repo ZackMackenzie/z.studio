@@ -558,6 +558,17 @@
     if (trans.pt) REVERSE_LOOKUP[trans.pt.trim()] = ptKey;
   }
 
+  // The three labels the "Começar" CTA can ever legitimately carry, sourced
+  // from the same DICTIONARY entry translateText() itself reads -- so this
+  // set can't drift out of sync with the translations it needs to recognize.
+  // Used by fixHeadingSemantics() (whose gate must keep matching after a
+  // language switch, not just in PT) and fixComecarButtonTranslation() below.
+  const COMECAR_LABELS = new Set([
+    "Começar",
+    (DICTIONARY["Começar"] && DICTIONARY["Começar"].en) || "Get started",
+    (DICTIONARY["Começar"] && DICTIONARY["Começar"].es) || "Empezar"
+  ]);
+
   function getActiveLang() {
     try {
       const saved = localStorage.getItem("zstudio_lang");
@@ -1155,7 +1166,7 @@
     // enforced every repair cycle.
     document.querySelectorAll(".random-word-appear").forEach(wrap => {
       let el = wrap.firstElementChild;
-      if (!el || el.textContent.trim() !== "Começar") return;
+      if (!el || !COMECAR_LABELS.has(el.getAttribute("aria-label"))) return;
       if (el.tagName === "H1") {
         const div = document.createElement("div");
         Array.from(el.attributes).forEach(a => div.setAttribute(a.name, a.value));
@@ -1183,6 +1194,75 @@
       Array.from(h4.attributes).forEach(a => h3.setAttribute(a.name, a.value));
       h3.innerHTML = h4.innerHTML;
       h4.replaceWith(h3);
+    });
+  }
+
+  // The "Começar" CTA's own one-shot entrance animation (a Framer Motion
+  // per-letter reveal) splits its text into one <div class="char"> per
+  // LETTER ("C","o","m",...), each carrying its own opacity for the
+  // staggered fade-in. applyTranslations()'s TreeWalker only ever matches a
+  // text NODE's full trimmed content against a whole DICTIONARY key, so it
+  // can never see this button's text at all -- each node it finds is a
+  // single letter, never the word "Começar" -- and the button was silently
+  // stuck in Portuguese through every language switch. By the time a user
+  // can even trigger a language switch, this entrance animation has long
+  // since finished (it plays once, on mount), so there's no stagger left to
+  // preserve: rebuilding the letter spans outright for the target word,
+  // fully visible (opacity:1), reproduces the finished end-state exactly
+  // for languages whose word also happens to need the same letter count,
+  // and does the only thing possible for ones that don't ("Começar" is 7
+  // letters, "Get started" is 11 counting the space -- there is no 1:1
+  // mapping, so the old spans are discarded and new ones built to match).
+  function fixComecarButtonTranslation() {
+    const ptLabel = "Começar";
+    document.querySelectorAll(".random-word-appear").forEach(wrap => {
+      const textWrap = wrap.firstElementChild;
+      const word = textWrap && textWrap.querySelector(".word");
+      if (!word) return;
+
+      const currentLabel = word.getAttribute("aria-label");
+      if (!COMECAR_LABELS.has(currentLabel)) return;
+
+      const target = translateText(ptLabel, getActiveLang()) || ptLabel;
+      if (currentLabel !== target) {
+      const chars = Array.from(word.children);
+      if (chars.length === 0) return;
+      const template = chars[0];
+
+      const frag = document.createDocumentFragment();
+      target.split("").forEach(ch => {
+        const span = template.cloneNode(false);
+        span.style.opacity = "1";
+        // A plain " " inside its own display:inline-block div risks being
+        // collapsed away by whitespace handling; a non-breaking space
+        // guarantees the gap between words still renders.
+        span.textContent = ch === " " ? " " : ch;
+        frag.appendChild(span);
+      });
+
+      word.innerHTML = "";
+      word.appendChild(frag);
+      word.setAttribute("aria-label", target);
+      textWrap.setAttribute("aria-label", target);
+      }
+
+      // fixHeadingSemantics() (earlier in the same repair cycle) just
+      // (re)set this box to the Framer-verified 140px/50px size -- a size
+      // measured against "Começar" specifically. A longer translation ("Get
+      // started" is 11 characters/includes a space, versus 7) can overflow
+      // that same fixed-width box, which fixHeadingSemantics()'s own
+      // comment notes is clipped by overflow:clip -- so a word that doesn't
+      // fit doesn't just look slightly off, it wraps and gets cut off
+      // entirely. Shrink the font just enough to fit the current word on
+      // one line; for "Começar" itself wordWidth never exceeds the box, so
+      // this is a no-op and the verified base size is left untouched.
+      word.style.whiteSpace = "nowrap";
+      const containerWidth = wrap.getBoundingClientRect().width;
+      const wordWidth = word.scrollWidth;
+      if (containerWidth > 0 && wordWidth > containerWidth) {
+        const baseSize = parseFloat(textWrap.style.fontSize) || 140;
+        textWrap.style.fontSize = Math.floor(baseSize * (containerWidth / wordWidth)) + "px";
+      }
     });
   }
 
@@ -1914,6 +1994,7 @@
     removeEmptyFloatingCTA();
     injectLanguageSwitcher();
     applyTranslations();
+    fixComecarButtonTranslation();
     updateWhatsAppLinks();
     removeSocialLinks();
     injectContactWhatsAppCard();
@@ -1949,6 +2030,7 @@
         removeEmptyFloatingCTA();
         injectLanguageSwitcher();
         applyTranslations();
+        fixComecarButtonTranslation();
         updateWhatsAppLinks();
         removeSocialLinks();
         injectContactWhatsAppCard();
