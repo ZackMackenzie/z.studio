@@ -1198,21 +1198,31 @@
   }
 
   // The "Começar" CTA's own one-shot entrance animation (a Framer Motion
-  // per-letter reveal) splits its text into one <div class="char"> per
-  // LETTER ("C","o","m",...), each carrying its own opacity for the
-  // staggered fade-in. applyTranslations()'s TreeWalker only ever matches a
-  // text NODE's full trimmed content against a whole DICTIONARY key, so it
-  // can never see this button's text at all -- each node it finds is a
-  // single letter, never the word "Começar" -- and the button was silently
-  // stuck in Portuguese through every language switch. By the time a user
-  // can even trigger a language switch, this entrance animation has long
-  // since finished (it plays once, on mount), so there's no stagger left to
-  // preserve: rebuilding the letter spans outright for the target word,
-  // fully visible (opacity:1), reproduces the finished end-state exactly
-  // for languages whose word also happens to need the same letter count,
-  // and does the only thing possible for ones that don't ("Começar" is 7
-  // letters, "Get started" is 11 counting the space -- there is no 1:1
-  // mapping, so the old spans are discarded and new ones built to match).
+  // effect, triggered on scroll/mount) splits its text into one
+  // <div class="char"> per LETTER ("C","o","m",...), fading every one of
+  // them from opacity:0 to opacity:1 together once triggered.
+  // applyTranslations()'s TreeWalker only ever matches a text NODE's full
+  // trimmed content against a whole DICTIONARY key, so it can never see
+  // this button's text at all -- each node it finds is a single letter,
+  // never the word "Começar" -- and the button was silently stuck in
+  // Portuguese through every language switch.
+  //
+  // Rebuilding the letter spans for the target word is unavoidable --
+  // "Começar" is 7 letters, "Get started" is 11 counting the space, there
+  // is no 1:1 remap -- but swapping them in WHILE Framer's own fade is
+  // still mid-flight (or hasn't fired yet) throws that animation away: an
+  // earlier version of this fix just forced every rebuilt letter straight
+  // to opacity:1, so a visitor whose saved language is EN/ES saw the
+  // button pop in instantly with no fade at all, while a PT visitor still
+  // got the real animated reveal -- a visible inconsistency between
+  // languages. Waiting for the ORIGINAL letters to actually finish fading
+  // in first (detected via `transitionend`, so this works regardless of
+  // whatever triggers Framer's reveal -- scroll, timer, or otherwise) and
+  // only swapping the text once they're already fully visible means every
+  // language rides the exact same unmodified animation; the word change
+  // itself happens at full opacity, same as how every other translated
+  // string on the page updates with a plain text swap and no fade of its
+  // own.
   function fixComecarButtonTranslation() {
     const ptLabel = "Começar";
     document.querySelectorAll(".random-word-appear").forEach(wrap => {
@@ -1228,6 +1238,23 @@
       const chars = Array.from(word.children);
       if (chars.length === 0) return;
       const template = chars[0];
+
+      if (getComputedStyle(template).opacity !== "1") {
+        if (!wrap.dataset.comecarSwapPending) {
+          wrap.dataset.comecarSwapPending = "1";
+          template.addEventListener("transitionend", () => {
+            delete wrap.dataset.comecarSwapPending;
+            fixComecarButtonTranslation();
+          }, { once: true });
+          // Safety net for environments where the fade never fires a
+          // transitionend at all (prefers-reduced-motion, or Framer setting
+          // the final opacity directly with no CSS transition) -- without
+          // this, a missed event would leave comecarSwapPending set forever
+          // and this button permanently stuck untranslated.
+          setTimeout(() => { delete wrap.dataset.comecarSwapPending; }, 4000);
+        }
+        return;
+      }
 
       const frag = document.createDocumentFragment();
       target.split("").forEach(ch => {
