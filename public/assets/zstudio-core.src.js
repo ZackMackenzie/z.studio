@@ -1239,19 +1239,35 @@
       if (chars.length === 0) return;
       const template = chars[0];
 
-      if (getComputedStyle(template).opacity !== "1") {
+      // True to its class name, this is a RANDOM per-letter reveal, not a
+      // synchronized fade -- each .char finishes independently, in no fixed
+      // order (confirmed by sampling: letter index 1 settled before index
+      // 0 in one run). Watching only chars[0] let the swap fire the instant
+      // that ONE letter happened to finish, often while several others were
+      // still mid-reveal, snapping the whole word to full visibility and
+      // cutting the animation short -- visibly different from PT's full
+      // random play-through. Waiting for EVERY letter to settle reproduces
+      // the complete animation before the word ever changes.
+      if (chars.some(c => getComputedStyle(c).opacity !== "1")) {
         if (!wrap.dataset.comecarSwapPending) {
           wrap.dataset.comecarSwapPending = "1";
-          template.addEventListener("transitionend", () => {
-            delete wrap.dataset.comecarSwapPending;
-            fixComecarButtonTranslation();
-          }, { once: true });
+          const checkAllSettled = () => {
+            if (chars.every(c => getComputedStyle(c).opacity === "1")) {
+              chars.forEach(c => c.removeEventListener("transitionend", checkAllSettled));
+              delete wrap.dataset.comecarSwapPending;
+              fixComecarButtonTranslation();
+            }
+          };
+          chars.forEach(c => c.addEventListener("transitionend", checkAllSettled));
           // Safety net for environments where the fade never fires a
           // transitionend at all (prefers-reduced-motion, or Framer setting
           // the final opacity directly with no CSS transition) -- without
           // this, a missed event would leave comecarSwapPending set forever
           // and this button permanently stuck untranslated.
-          setTimeout(() => { delete wrap.dataset.comecarSwapPending; }, 4000);
+          setTimeout(() => {
+            chars.forEach(c => c.removeEventListener("transitionend", checkAllSettled));
+            delete wrap.dataset.comecarSwapPending;
+          }, 4000);
         }
         return;
       }
