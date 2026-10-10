@@ -1723,6 +1723,22 @@
             padding: 3px 5px !important;
           }
         }
+
+        /*
+         * .framer-1o5g5u1 is flex-flow:row with no wrap, so below ~280-300px
+         * (reachable via real browser zoom well short of the 500% this was
+         * tested against, not just exotic viewport widths) "z.studio" and
+         * "São Paulo, SP" run out of room and visibly collide -- confirmed
+         * by screenshot: still a hairline gap at 300px, fully merged into
+         * one run of text by 265px. The location string is a nice-to-have,
+         * not load-bearing, so it's the one that gives way; the language
+         * switcher (the thing people actually use) keeps its space.
+         */
+        @media (max-width: 400px) {
+          .zstudio-nav-location {
+            display: none !important;
+          }
+        }
       `;
     }
 
