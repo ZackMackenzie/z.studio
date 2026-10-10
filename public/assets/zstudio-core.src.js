@@ -1523,6 +1523,18 @@
           background-color: #000000 !important;
         }
 
+        /*
+         * Site-wide safety net against stray horizontal bleed (components
+         * deliberately positioned off-screen via wide centered-text boxes --
+         * see .framer-qfrgms below for one confirmed instance -- plus
+         * whatever else this Framer export does the same way elsewhere).
+         * overflow-x only, never a plain overflow:hidden, so no vertical
+         * scroll-reveal animation anywhere on the page is affected.
+         */
+        html {
+          overflow-x: clip !important;
+        }
+
         /* Hide unwanted badge overlay and Framer branding */
         #template-overlay, #__framer-badge-container, .__framer-badge {
           display: none !important;
@@ -1738,6 +1750,49 @@
           .zstudio-nav-location {
             display: none !important;
           }
+        }
+
+        /*
+         * Defense in depth: Framer's own .framer-qfrgms (the Hero section's
+         * direct content wrapper) sets overflow:visible, and #hero's own
+         * <h1> reports two DOM copies near the 810px breakpoint (the ticker
+         * component's own seamless-loop duplicate -- see the ticker-freeze
+         * rule below for the real mechanism and root-cause fix). Clipping
+         * horizontally only (never overflow:hidden outright) means nothing
+         * in this section can ever bleed past its own box, without touching
+         * whatever vertical bleed its scroll-reveal entrance animations
+         * rely on.
+         */
+        .framer-qfrgms {
+          overflow-x: clip !important;
+        }
+
+        /*
+         * The Hero headline ("Seu negócio, só que melhor.") is wrapped in a
+         * Framer "Ticker" component -- the same kind normally used for a
+         * continuously-scrolling marquee of several rotating items -- but
+         * configured here with exactly one item (aria-setsize="1"). With
+         * nothing to rotate to, the ticker still never stops: measured via
+         * live sampling, its <ul> transform translates at a perfectly
+         * constant ~70.5px/s with zero deceleration (not a one-time
+         * settle), looping forever. The single headline is duplicated
+         * in-DOM for the (pointless, single-item) seamless loop, and
+         * whichever moment a page happens to be rendered/screenshotted at
+         * can land exactly between the two copies -- the tail of one
+         * ("...melhor.") clipped by the viewport on the right, the head of
+         * its own duplicate ("Seu negócio...") sliding in from the left,
+         * both visible at once. Freezing the transform at the position
+         * where the single copy exactly fills its own clip window (verified
+         * empirically: the ticker item's width and its clip window's width
+         * are equal, so translateX(0) is the exact resting point with zero
+         * cropping -- the original SSR default of translateX(-10px)
+         * reproduces the same bug, confirming 0 and not -10px is correct)
+         * removes the pointless scroll entirely and always shows the one
+         * complete sentence Framer's own CMS content provides.
+         */
+        .framer-1v4qmj0 > ul {
+          transform: translateX(0px) !important;
+          opacity: 1 !important;
         }
       `;
     }
