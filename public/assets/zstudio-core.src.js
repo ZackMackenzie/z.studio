@@ -1794,6 +1794,34 @@
           transform: translateX(0px) !important;
           opacity: 1 !important;
         }
+
+        /*
+         * Every major section on this site (nav, hero, and the rest of the
+         * page's content "Container" wrappers) shares one consistent design
+         * token: max-width:1200px, centered. At normal zoom that's a design
+         * choice (cap line length on wide monitors); at a zoomed-OUT
+         * browser -- which *increases* the effective CSS-pixel viewport,
+         * the opposite of zooming in -- that same 1200px cap leaves a
+         * visibly huge, unfilled black margin on both sides (reported
+         * directly, screenshot at 75% zoom on a ~1900px-wide window: the
+         * hero headline sits in a 1200px column with hundreds of empty px
+         * to either side). Widening the cap to 1800px keeps every width at
+         * or below that completely unaffected -- it only ever changes what
+         * renders beyond 1800px of effective viewport, i.e. exactly the
+         * zoomed-out/ultrawide case this was reported from -- while still
+         * capping line length at some point rather than letting text
+         * stretch edge-to-edge on a 4K display.
+         */
+        .framer-1o5g5u1,
+        .framer-qfrgms,
+        .framer-7hqcq2,
+        .framer-2wscqo,
+        .framer-120ggkx,
+        .framer-1lpniya,
+        .framer-dgarai,
+        .framer-rsqvqi {
+          max-width: 1800px !important;
+        }
       `;
     }
 
