@@ -1768,31 +1768,45 @@
         }
 
         /*
-         * The Hero headline ("Seu negócio, só que melhor.") is wrapped in a
-         * Framer "Ticker" component -- the same kind normally used for a
-         * continuously-scrolling marquee of several rotating items -- but
-         * configured here with exactly one item (aria-setsize="1"). With
-         * nothing to rotate to, the ticker still never stops: measured via
-         * live sampling, its <ul> transform translates at a perfectly
-         * constant ~70.5px/s with zero deceleration (not a one-time
-         * settle), looping forever. The single headline is duplicated
-         * in-DOM for the (pointless, single-item) seamless loop, and
-         * whichever moment a page happens to be rendered/screenshotted at
-         * can land exactly between the two copies -- the tail of one
-         * ("...melhor.") clipped by the viewport on the right, the head of
-         * its own duplicate ("Seu negócio...") sliding in from the left,
-         * both visible at once. Freezing the transform at the position
-         * where the single copy exactly fills its own clip window (verified
-         * empirically: the ticker item's width and its clip window's width
-         * are equal, so translateX(0) is the exact resting point with zero
-         * cropping -- the original SSR default of translateX(-10px)
-         * reproduces the same bug, confirming 0 and not -10px is correct)
-         * removes the pointless scroll entirely and always shows the one
-         * complete sentence Framer's own CMS content provides.
+         * NOT frozen (an earlier version of this stylesheet forced this
+         * <ul>'s transform to a fixed translateX(0), killing its motion
+         * entirely). The Hero headline's continuous horizontal drift is
+         * this site's own design -- a Framer "Ticker" component, part of
+         * the portfolio's visual identity -- and was never reported as
+         * broken on its own; it was found as a side effect while
+         * investigating an unrelated zoom/overflow bug, and a single
+         * screenshot catching it mid-scroll (the tail of one loop pass and
+         * the head of the next both partially visible, with a gap between
+         * them) is the normal, expected look of ANY continuously-scrolling
+         * marquee paused at an arbitrary instant -- not evidence it's
+         * stuck or malfunctioning. Re-verify with live sampling before
+         * ever reaching for a freeze here again: this component's <ul>
+         * transform moving at a constant rate with no deceleration is
+         * exactly what a correctly-functioning infinite marquee looks
+         * like, not proof of a bug.
+         */
+
+        /*
+         * The actual, measurable defect in that same component: its <ul>
+         * (class-less, targeted via its parent .framer-1v4qmj0) has
+         * gap:10px between the real item and Framer's own runtime-added
+         * duplicate (for seamless looping), but each item is nearly as
+         * wide as its own clip window (measured equal at some breakpoints).
+         * Sampled over a full ~19s cycle at 1440px: only 13 of 92 frames
+         * (14%) showed one clean instance of the headline -- the other 86%
+         * showed both the outgoing and incoming copies simultaneously,
+         * which reads as broken/colliding text, not a deliberate design
+         * choice. A fixed px gap can't fix this across breakpoints (item
+         * width varies with viewport), but a percentage gap is resolved
+         * against the ul's own content-box width, which already tracks the
+         * item's width closely at every breakpoint -- gap:100% approximates
+         * "one item-width of empty space" everywhere, turning the 86%
+         * overlap into a real reading phase with a brief, clean transition
+         * instead of a permanent collision. The drift itself (Framer's own
+         * JS, untouched here) keeps running exactly as designed.
          */
         .framer-1v4qmj0 > ul {
-          transform: translateX(0px) !important;
-          opacity: 1 !important;
+          gap: 100% !important;
         }
 
         /*
