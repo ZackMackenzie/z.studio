@@ -2074,6 +2074,26 @@
       form.setAttribute("data-zstudio-form-attached", "true");
       form.setAttribute("novalidate", "true");
 
+      // Framer's form widget renders these fields with no <label> and no
+      // aria-label, relying solely on their placeholder text -- which
+      // disappears the moment a screen reader user starts typing, failing
+      // WCAG 4.1.2 (Name, Role, Value). The honeypot anti-spam fields
+      // alongside them (website/company/message/subject/etc, all
+      // tabindex="-1" aria-hidden="true") are correctly already excluded
+      // from the accessibility tree and are left untouched here.
+      const fieldLabels = {
+        "Nome completo": "Nome completo",
+        "Email": "Email",
+        "Location": "Orçamento",
+        "Mensagem": "Mensagem",
+      };
+      Object.keys(fieldLabels).forEach(name => {
+        const field = form.querySelector(`[name="${name}"]`);
+        if (field && !field.getAttribute("aria-label")) {
+          field.setAttribute("aria-label", fieldLabels[name]);
+        }
+      });
+
       // Prevent native and React submit
       form.addEventListener("submit", function(e) {
         e.preventDefault();
