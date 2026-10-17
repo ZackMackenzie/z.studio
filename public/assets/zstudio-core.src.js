@@ -692,19 +692,38 @@
   function updateWhatsAppLinks() {
     const lang = getActiveLang();
     const generalWaUrl = getWhatsAppUrl("general");
+    // International (EN/ES) visitors don't use WhatsApp -- every CTA below
+    // that would otherwise open wa.me instead does a same-tab, in-site
+    // navigation to the contact page's own form (already fully built,
+    // validated, and -- as of this same pass -- accessible: see
+    // handleContactFormSubmit()'s own EN/ES branch, which mails
+    // hello@z.studio instead of opening WhatsApp once that form is
+    // submitted). PT is entirely unchanged below.
+    const international = lang === "en" || lang === "es";
+    // canonicalizeInternalLinks() (same repair cycle) normalizes every
+    // internal href to an absolute path with no trailing slash -- using
+    // that same canonical form here means it's already correct and stable
+    // from the first paint, not reliant on a later pass to reformat it.
+    const contactHref = "/contact";
 
-    // 1. Replace all mailto: links with WhatsApp
+    // 1. Replace all mailto: links with WhatsApp (or the contact page)
     document.querySelectorAll('a[href^="mailto:"]').forEach(a => {
-      a.href = generalWaUrl;
-      a.target = "_blank";
-      a.rel = "noopener noreferrer";
+      if (international) {
+        a.href = contactHref;
+        a.removeAttribute("target");
+        a.removeAttribute("rel");
+      } else {
+        a.href = generalWaUrl;
+        a.target = "_blank";
+        a.rel = "noopener noreferrer";
+      }
       a.setAttribute("data-wa-cta", "true");
     });
 
-    // 2. Identify contact CTAs and point to WhatsApp
+    // 2. Identify contact CTAs and point to WhatsApp (or the contact page)
     document.querySelectorAll("a, button, div").forEach(el => {
       const text = el.textContent ? el.textContent.trim().toLowerCase() : "";
-      const isContactCTA = 
+      const isContactCTA =
         text === "entre em contato agora" ||
         text === "get in touch now" ||
         text === "ponte en contacto ahora" ||
@@ -716,22 +735,38 @@
         text === "conversar no whatsapp" ||
         text === "start a project" ||
         text === "começar um projeto" ||
-        text === "start chat on whatsapp";
+        text === "start chat on whatsapp" ||
+        // The Hero CTA's actual rendered text (DICTIONARY["Começar"]):
+        // "começar" / "get started" / "empezar". Not covered by any
+        // pattern above -- this button kept whichever href the static
+        // export happened to ship with, in every language, until this fix.
+        text === "começar" ||
+        text === "get started" ||
+        text === "empezar";
 
       if (isContactCTA && !el.closest("#zstudio-lang-switcher") && !el.closest("form") && !el.closest(".framer-1o4ffb9") && !el.closest(".framer-qu44xm") && !el.closest(".framer-al9wyy-container")) {
-        const context = getPageContext();
-        const url = getWhatsAppUrl(context);
-
         if (el.tagName.toLowerCase() === "a") {
-          el.href = url;
-          el.target = "_blank";
-          el.rel = "noopener noreferrer";
+          if (international) {
+            el.href = contactHref;
+            el.removeAttribute("target");
+            el.removeAttribute("rel");
+          } else {
+            const context = getPageContext();
+            el.href = getWhatsAppUrl(context);
+            el.target = "_blank";
+            el.rel = "noopener noreferrer";
+          }
         } else {
           el.style.cursor = "pointer";
           el.onclick = function(e) {
             e.preventDefault();
             e.stopPropagation();
-            window.open(url, "_blank");
+            if (international) {
+              location.href = contactHref;
+            } else {
+              const context = getPageContext();
+              window.open(getWhatsAppUrl(context), "_blank");
+            }
           };
         }
       }
@@ -741,16 +776,22 @@
     const headerPill = document.querySelector(".framer-9nc42h");
     if (headerPill) {
       headerPill.style.cursor = "pointer";
-      headerPill.title = "WhatsApp: +55 11 91440-6822";
+      headerPill.title = international ? "" : "WhatsApp: +55 11 91440-6822";
       headerPill.onclick = function(e) {
         e.preventDefault();
-        window.open(generalWaUrl, "_blank");
+        if (international) {
+          location.href = contactHref;
+        } else {
+          window.open(generalWaUrl, "_blank");
+        }
       };
     }
 
-    // 4. Update WhatsApp card on /contact if present
+    // 4. Update WhatsApp card on /contact if present (PT only -- this card
+    // is never shown to international visitors in the first place, see
+    // injectContactWhatsAppCard())
     const contactWaBtn = document.getElementById("zstudio-contact-wa-btn");
-    if (contactWaBtn) {
+    if (contactWaBtn && !international) {
       contactWaBtn.href = generalWaUrl;
     }
   }
@@ -1966,6 +2007,18 @@
       pt: "Mensagem pronta no WhatsApp!",
       en: "Message ready in WhatsApp!",
       es: "¡Mensaje listo en WhatsApp!"
+    },
+    sendingEmail: {
+      en: "Opening your email client...",
+      es: "Abriendo tu cliente de correo..."
+    },
+    // International (EN/ES) visitors don't use WhatsApp -- this is the
+    // thank-you state shown after their mail client opens, per the
+    // explicit requested copy ("We reply to all inquiries within 12 hours
+    // via email or LinkedIn").
+    thankYou: {
+      en: "Thanks for reaching out! We reply to all inquiries within 12 hours via email or LinkedIn.",
+      es: "¡Gracias por contactarnos! Respondemos todas las consultas dentro de 12 horas por correo o LinkedIn."
     }
   };
 
@@ -2069,6 +2122,29 @@
       waMessage = `¡Hola! Mi nombre es ${nameVal}.\nMe gustaría hablar sobre un proyecto con z.studio.\n\n• Correo electrónico: ${emailVal}\n• Rango de inversión: ${budgetDisplay}\n• Mensaje:\n${msgVal}`;
     } else {
       waMessage = `Olá! Meu nome é ${nameVal}.\nGostaria de conversar sobre um projeto com a z.studio.\n\n• E-mail: ${emailVal}\n• Faixa de investimento: ${budgetDisplay}\n• Mensagem:\n${msgVal}`;
+    }
+
+    // International (EN/ES) visitors don't use WhatsApp -- mailto instead,
+    // opening the visitor's own email client with the same information
+    // that would otherwise have gone to WhatsApp, ending on the explicit
+    // thank-you copy requested rather than a second WhatsApp-specific
+    // message. PT is completely unchanged below.
+    if (lang === "en" || lang === "es") {
+      const subject = lang === "en" ? "New project inquiry from z.studio" : "Nueva consulta de proyecto de z.studio";
+      const mailtoUrl = `mailto:hello@z.studio?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(waMessage)}`;
+
+      feedback.innerHTML = '<span style="color:#22c55e;font-size:13px;font-weight:500;display:inline-block;">' + FORM_I18N.sendingEmail[lang] + '</span>';
+
+      const mailLink = document.createElement("a");
+      mailLink.href = mailtoUrl;
+      document.body.appendChild(mailLink);
+      mailLink.click();
+
+      setTimeout(() => {
+        mailLink.remove();
+        feedback.innerHTML = '<span style="color:#22c55e;font-size:13px;font-weight:500;display:inline-block;">' + FORM_I18N.thankYou[lang] + '</span>';
+      }, 400);
+      return;
     }
 
     const waUrl = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(waMessage)}`;
