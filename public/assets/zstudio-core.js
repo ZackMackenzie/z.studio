@@ -226,6 +226,45 @@
         .framer-aamhva {
           max-width: 1800px !important;
         }
+        .framer-8mr5mw {
+          transition: transform 280ms ease, filter 280ms ease !important;
+        }
+        .framer-1yue9qt {
+          transition: opacity 280ms ease !important;
+        }
+        .framer-1dcru56 {
+          transition: opacity 220ms ease !important;
+        }
+        .framer-1i5g30s:hover .framer-8mr5mw,
+        .framer-1i5g30s:focus-visible .framer-8mr5mw {
+          transform: scale(1.04) !important;
+          filter: brightness(1.04) !important;
+        }
+        .framer-1i5g30s:hover .framer-1dcru56,
+        .framer-1i5g30s:focus-visible .framer-1dcru56 {
+          opacity: 1 !important;
+        }
+        @media (hover: none) {
+          .framer-1dcru56 {
+            opacity: 0.55 !important;
+          }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .framer-8mr5mw,
+          .framer-1yue9qt,
+          .framer-1dcru56 {
+            transition: none !important;
+          }
+        }
+        a:focus-visible,
+        button:focus-visible,
+        [role="button"]:focus-visible,
+        input:focus-visible,
+        textarea:focus-visible,
+        select:focus-visible {
+          outline: 2px solid #ffffff !important;
+          outline-offset: 3px !important;
+        }
       `}document.querySelectorAll("#zstudio-lang-switcher, #zstudio-lang-switcher-fallback").forEach(t=>{t.parentElement===document.body&&t.remove()}),document.querySelectorAll(".framer-1o5g5u1").forEach(t=>{let e=t.querySelector(".zstudio-nav-right");if(e){if(!e.querySelector(".zstudio-lang-switcher")){const n=te("header");e.appendChild(n)}if(!e.querySelector(".zstudio-nav-location")){const n=document.createElement("span");n.className="zstudio-nav-location",n.textContent="S\xE3o Paulo, SP",e.insertBefore(n,e.firstChild)}}else{e=document.createElement("div"),e.className="zstudio-nav-right";const n=document.createElement("span");n.className="zstudio-nav-location",n.textContent="S\xE3o Paulo, SP";const a=te("header");e.appendChild(n),e.appendChild(a);let i=t.querySelector(".framer-9nc42h");for(;i&&i.parentElement&&i.parentElement!==t;)i=i.parentElement;if(i&&i.parentElement===t){const s=document.createElement("div");s.className="zstudio-nav-cta-group",i.parentElement.insertBefore(s,i),s.appendChild(i),s.appendChild(e)}else t.appendChild(e)}}),document.querySelectorAll('.framer-1j95pa0, [data-framer-name="Time"]').forEach(t=>{t.style.setProperty("display","none","important")})}function de(){const o=p();document.querySelectorAll(".zstudio-lang-switcher, #zstudio-lang-switcher-fallback").forEach(e=>{e.querySelectorAll("button[data-lang-code]").forEach(n=>{const r=n.getAttribute("data-lang-code")===o;n.style.background=r?"rgba(255, 255, 255, 0.18)":"transparent",n.style.color=r?"#ffffff":"rgba(255, 255, 255, 0.55)",n.style.fontWeight=r?"600":"500"})});const t=document.getElementById("zstudio-contact-wa-card");t&&t.remove()}const y={nameError:{pt:"Por favor, preencha seu nome completo.",en:"Please enter your full name.",es:"Por favor, ingresa tu nombre completo."},emailError:{pt:"Por favor, insira um e-mail v\xE1lido.",en:"Please enter a valid email address.",es:"Por favor, ingresa un correo electr\xF3nico v\xE1lido."},budgetError:{pt:"Por favor, selecione uma faixa de investimento.",en:"Please select an investment range.",es:"Por favor, selecciona un rango de inversi\xF3n."},messageError:{pt:"Por favor, escreva uma mensagem detalhando seu projeto.",en:"Please write a message detailing your project.",es:"Por favor, escribe un mensaje detalhando tu proyecto."},sending:{pt:"Abrindo WhatsApp...",en:"Opening WhatsApp...",es:"Abriendo WhatsApp..."},success:{pt:"Mensagem pronta no WhatsApp!",en:"Message ready in WhatsApp!",es:"\xA1Mensaje listo en WhatsApp!"},sendingEmail:{en:"Opening your email client...",es:"Abriendo tu cliente de correo..."},thankYou:{en:"Thanks for reaching out! We reply to all inquiries within 12 hours via email or LinkedIn.",es:"\xA1Gracias por contactarnos! Respondemos todas las consultas dentro de 12 horas por correo o LinkedIn."}},P={"At\xE9 R$ 1.000":{pt:"At\xE9 R$ 1.000",en:"Up to $1,000",es:"Hasta $1.000"},"R$ 1.000 \u2013 R$ 3.000":{pt:"R$ 1.000 \u2013 R$ 3.000",en:"$1,000 \u2013 $3,000",es:"$1.000 \u2013 $3.000"},"R$ 3.000 \u2013 R$ 5.000":{pt:"R$ 3.000 \u2013 R$ 5.000",en:"$3,000 \u2013 $5,000",es:"$3.000 \u2013 $5.000"},"Acima de R$ 10.000":{pt:"Acima de R$ 10.000",en:"Above $10,000",es:"M\xE1s de $10.000"},"Ainda n\xE3o sei":{pt:"Ainda n\xE3o sei",en:"Not sure yet",es:"A\xFAn no lo s\xE9"}};function le(o){let t=o.querySelector("#zstudio-form-feedback");if(!t){t=document.createElement("div"),t.id="zstudio-form-feedback";const e=o.querySelector(".framer-qu44xm, .framer-al9wyy-container, button[type='submit']")||o.lastElementChild;e&&e.parentNode?e.parentNode.insertBefore(t,e):o.appendChild(t)}return t}function j(o){if(!o)return;const t=p(),e=le(o),n=o.querySelector("input[name*='Nome'], input[name*='name'], input[placeholder*='Nome'], input[placeholder*='name'], input[type='text']"),a=o.querySelector("input[type='email'], input[name*='Email'], input[name*='email'], input[placeholder*='Email']"),r=o.querySelector("select, select[name='Location']"),i=o.querySelector("textarea, textarea[name='Mensagem'], textarea[placeholder*='mensagem'], textarea[placeholder*='message']");[n,a,r,i].filter(Boolean).forEach(g=>{g.classList.remove("zstudio-field-error")}),e.innerHTML="";const d=n?n.value.trim():"",f=a?a.value.trim():"",c=r?(r.value||"").trim():"",l=i?i.value.trim():"",m=/^[^\s@]+@[^\s@]+\.[^\s@]+$/,v=c&&c!==""&&!c.toLowerCase().includes("selecionar")&&!c.toLowerCase().includes("select")&&(r?r.selectedIndex>0:!0);function x(g,W){if(g){g.classList.add("zstudio-field-error"),g.focus();const b=function(){g.classList.remove("zstudio-field-error"),e.innerHTML="",g.removeEventListener("input",b),g.removeEventListener("change",b)};g.addEventListener("input",b),g.addEventListener("change",b)}e.innerHTML='<span style="color:#ef4444;font-size:13px;font-weight:500;display:inline-block;">'+W+"</span>"}if(!d||d.length<2){x(n,y.nameError[t]);return}if(!f||!m.test(f)){x(a,y.emailError[t]);return}if(!v){x(r,y.budgetError[t]);return}if(!l||l.length<3){x(i,y.messageError[t]);return}const A=P[c]&&P[c][t]?P[c][t]:c;let w="";if(t==="en"?w=`Hello! My name is ${d}.
 I would like to discuss a project with z.studio.
 

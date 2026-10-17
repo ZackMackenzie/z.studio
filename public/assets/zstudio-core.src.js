@@ -1915,6 +1915,37 @@
       // with a selector-aware (not just single-class) search before adding
       // it here, to catch anything else with the same compound-selector
       // blind spot; nothing else turned up.
+      //
+      // .framer-1i5g30s:hover/:focus-visible -> .framer-8mr5mw /
+      // .framer-1dcru56 / .framer-1yue9qt: every project card ships a
+      // built-in hover reveal authored in Framer itself -- a round "Arrow"
+      // button (.framer-1dcru56) sitting at opacity:0, meant to fade in
+      // over the thumbnail on hover. Confirmed dead in production: sampling
+      // computed style before and after a simulated pointer hover showed
+      // zero change to the arrow's opacity or the image wrapper's
+      // transform/filter -- Framer's own hover-variant runtime isn't firing
+      // for this component. Re-implemented in plain CSS instead of chasing
+      // why that runtime doesn't fire, consistent with this file's general
+      // approach of not depending on Framer's own JS where a CSS override
+      // can stand on its own. .framer-1i5g30s is the card's own anchor
+      // element (confirmed present on all 8 card instances across both the
+      // homepage preview grid and the full /projects grid), so :hover and
+      // :focus-visible on it reach the thumbnail/arrow children directly
+      // without needing a :has() parent selector. Scale/brightness kept
+      // subtle (1.04x) and within the 180-350ms hover-transition range;
+      // :focus-visible (not :focus) means mouse/touch activation doesn't
+      // trigger it, only real keyboard focus does. (hover:none) touch
+      // devices get the arrow at a permanent low-opacity resting state
+      // instead of a hover reveal, since there's no hover to trigger it
+      // there and the card is a direct link anyway.
+      //
+      // a/button/[role=button]/input/textarea/select:focus-visible: this
+      // export ships a global `outline: none` reset (visible on any `a` in
+      // the page source) with nothing replacing it, so keyboard users had
+      // zero focus indicator anywhere on the site. :focus-visible (not
+      // :focus) so the existing mouse/touch-driven visual design is
+      // completely unaffected -- the ring only ever appears for real
+      // keyboard tabbing.
       style.textContent = `
         html, body {
           background: #000000 !important;
@@ -2111,6 +2142,45 @@
         .framer-rsqvqi,
         .framer-aamhva {
           max-width: 1800px !important;
+        }
+        .framer-8mr5mw {
+          transition: transform 280ms ease, filter 280ms ease !important;
+        }
+        .framer-1yue9qt {
+          transition: opacity 280ms ease !important;
+        }
+        .framer-1dcru56 {
+          transition: opacity 220ms ease !important;
+        }
+        .framer-1i5g30s:hover .framer-8mr5mw,
+        .framer-1i5g30s:focus-visible .framer-8mr5mw {
+          transform: scale(1.04) !important;
+          filter: brightness(1.04) !important;
+        }
+        .framer-1i5g30s:hover .framer-1dcru56,
+        .framer-1i5g30s:focus-visible .framer-1dcru56 {
+          opacity: 1 !important;
+        }
+        @media (hover: none) {
+          .framer-1dcru56 {
+            opacity: 0.55 !important;
+          }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .framer-8mr5mw,
+          .framer-1yue9qt,
+          .framer-1dcru56 {
+            transition: none !important;
+          }
+        }
+        a:focus-visible,
+        button:focus-visible,
+        [role="button"]:focus-visible,
+        input:focus-visible,
+        textarea:focus-visible,
+        select:focus-visible {
+          outline: 2px solid #ffffff !important;
+          outline-offset: 3px !important;
         }
       `;
     }
