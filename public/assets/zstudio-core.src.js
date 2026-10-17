@@ -1516,42 +1516,202 @@
         style.id = "zstudio-nav-style";
         document.head.appendChild(style);
       }
+      // The CSS below ships to every visitor inside this template literal,
+      // and esbuild's minifier can't strip comments that live INSIDE a JS
+      // string (unlike real // or /* */ comments in the surrounding code,
+      // which it does strip) -- so every rule's rationale lives here, as
+      // real JS comments outside the string, instead of inline. Confirmed
+      // this was costing ~9KB (16% of the whole minified file) in comment
+      // bytes that shipped to production with zero effect on rendering.
+      //
+      // html/body: force black background (some Framer states briefly
+      // reveal the native white html/body background underneath).
+      //
+      // html { overflow-x: clip }: site-wide safety net against stray
+      // horizontal bleed from components deliberately positioned off-screen
+      // via wide centered-text boxes (.framer-qfrgms is one confirmed
+      // instance) or anything else this Framer export does the same way.
+      // overflow-x only, never plain overflow:hidden, so no vertical
+      // scroll-reveal animation anywhere on the page is affected.
+      //
+      // #template-overlay / #__framer-badge-container / .__framer-badge:
+      // hide the Framer branding badge and template-editor overlay.
+      //
+      // #zstudio-contact-wa-card: hide the injected WhatsApp contact card
+      // if it ever renders outside of its intended place.
+      //
+      // .framer-1j95pa0 / [data-framer-name="Time"]: hide Framer's own
+      // overlapping "Time" nav element (replaced by our injected
+      // location+switcher group below).
+      //
+      // .framer-1o5g5u1: the navbar's own flex row container.
+      //
+      // .zstudio-nav-right: our injected container holding the location
+      // text and language switcher side-by-side.
+      //
+      // .zstudio-nav-cta-group: wraps the CTA pill + our injected
+      // location/switcher as a single flex item, so the navbar row
+      // (.framer-1o5g5u1, which distributes its DIRECT children with
+      // justify-content: space-between) still only sees the original
+      // number of top-level children. Appending rightGroup as a bare extra
+      // sibling there added a 4th child and visibly skewed/uncentered the
+      // whole header row.
+      //
+      // .framer-9nc42h: "Entre em contato agora" must sit centered on the
+      // header's own width, not next to "São Paulo, SP" (it only ended up
+      // beside it because both share .zstudio-nav-cta-group, so the
+      // original 3-child space-between math on .framer-1o5g5u1 wasn't
+      // disturbed). Taking it out of that flex flow with absolute +
+      // left:50% centers it against the header container's actual width at
+      // any viewport, instead of whatever the flex distribution happened
+      // to produce. .framer-1o5g5u1 is already position:relative.
+      //
+      // .zstudio-nav-location: styling for the injected location text.
+      //
+      // html/body (2nd rule): same black-background enforcement, plus
+      // overscroll-behavior-y:none for the Lenis rubber-band fix below.
+      //
+      // html / #main / .framer-1kfxmrd-container / .framer-bsobv0-container
+      // / .framer-15zqc7h / .framer-jg6vfd / .framer-9vBJm / .framer-evEMj /
+      // .framer-16znbqb-container / .framer-syrbsj-container / #overlay /
+      // #template-overlay (2nd rule): the bottom white bands come from
+      // Lenis (framer-1kfxmrd-container and framer-bsobv0-container, two
+      // separate "Lenis・Smooth Scroll" component instances on this page)
+      // rubber-banding past the end of its virtual scroll content on touch
+      // devices, which briefly exposes the native <html>/<body> background
+      // beneath. overscroll-behavior-y stops the bounce; these
+      // background-color rules cover the gap in case a browser ignores it
+      // (older Safari).
+      //
+      // #zstudio-form-feedback / .zstudio-field-error: contact form
+      // feedback and validation-error styling.
+      //
+      // .framer-14o4nkg: project card titles ("Websites", "SaaS /
+      // Produto", etc.) sit in a fixed-height box (framer-nkianr,
+      // data-framer-name="Content") whose text is a couple of px taller
+      // than the box, clipping descenders ("p" in "Produto"). Growing
+      // framer-nkianr alone doesn't fix it: its own parent card
+      // (.framer-jp00ba, height:100%) ALSO clips with overflow:clip at a
+      // fixed height bound to the card/grid cell, so extra height on the
+      // inner box still gets cut off one level up. Instead, nudge the text
+      // itself up a few px so its descender clears the existing clip
+      // boundary, without changing any box's height.
+      //
+      // [data-framer-name="Backdrop"] (+ img): project photos
+      // (mockup/cover images bound from the CMS, rendered client-side into
+      // Backdrop layers) must be shown in full, never cropped. Framer's
+      // default "Backdrop" fill uses cover/crop sizing; force it to fit the
+      // whole image inside its frame instead.
+      //
+      // .zstudio-more-projects-cta: simplified "Mais projetos" block, just
+      // the centered CTA link.
+      //
+      // .zstudio-more-projects-cta > a: the link itself was moved here out
+      // of a "-container" wrapper (see simplifyMoreProjectsSection) that
+      // supplied its real sizing as a percentage of the original "Mais
+      // projetos" grid cell -- on the mobile breakpoint specifically, that
+      // percentage resolved to something close to the full viewport width,
+      // so without that wrapper the relocated button rendered edge-to-edge
+      // instead of as the compact pill it is everywhere else on the site.
+      // Forcing it back to its own content size here is what the pill
+      // actually looks like at every other breakpoint.
+      //
+      // @media (max-width:600px): shrink the nav location/switcher further
+      // on small phones.
+      //
+      // @media (max-width:400px) .zstudio-nav-location: .framer-1o5g5u1 is
+      // flex-flow:row with no wrap, so below ~280-300px (reachable via real
+      // browser zoom well short of the 500% this was tested against, not
+      // just exotic viewport widths) "z.studio" and "São Paulo, SP" run out
+      // of room and visibly collide -- confirmed by screenshot: still a
+      // hairline gap at 300px, fully merged into one run of text by 265px.
+      // The location string is a nice-to-have, not load-bearing, so it's
+      // the one that gives way; the language switcher (the thing people
+      // actually use) keeps its space.
+      //
+      // .framer-qfrgms { overflow-x: clip }: defense in depth. Framer's own
+      // .framer-qfrgms (the Hero section's direct content wrapper) sets
+      // overflow:visible, and #hero's own <h1> reports two DOM copies near
+      // the 810px breakpoint (the ticker component's own seamless-loop
+      // duplicate -- see the gap rule below for the real mechanism and
+      // root-cause fix). Clipping horizontally only (never overflow:hidden
+      // outright) means nothing in this section can ever bleed past its own
+      // box, without touching whatever vertical bleed its scroll-reveal
+      // entrance animations rely on.
+      //
+      // The Hero headline's continuous horizontal drift (a Framer "Ticker"
+      // component) is NOT frozen -- an earlier version of this stylesheet
+      // forced its <ul> transform to a fixed translateX(0), killing the
+      // motion entirely. That drift is this site's own design, part of the
+      // portfolio's visual identity, and was never reported as broken on
+      // its own; it was found as a side effect while investigating an
+      // unrelated zoom/overflow bug, and a single screenshot catching it
+      // mid-scroll (the tail of one loop pass and the head of the next both
+      // partially visible, with a gap between them) is the normal, expected
+      // look of ANY continuously-scrolling marquee paused at an arbitrary
+      // instant -- not evidence it's stuck or malfunctioning. Re-verify
+      // with live sampling before ever reaching for a freeze here again:
+      // this component's <ul> transform moving at a constant rate with no
+      // deceleration is exactly what a correctly-functioning infinite
+      // marquee looks like, not proof of a bug.
+      //
+      // .framer-1v4qmj0 > ul { gap: 90% }: the actual, measurable defect in
+      // that same component: its <ul> (class-less, targeted via its parent
+      // .framer-1v4qmj0) has gap:10px between the real item and Framer's
+      // own runtime-added duplicate (for seamless looping), but each item
+      // is nearly as wide as its own clip window (measured equal at some
+      // breakpoints). Sampled over a full ~19s cycle at 1440px: only 13 of
+      // 92 frames (14%) showed one clean instance of the headline -- the
+      // other 86% showed both the outgoing and incoming copies
+      // simultaneously, which reads as broken/colliding text, not a
+      // deliberate design choice. A fixed px gap can't fix this across
+      // breakpoints (item width varies with viewport), but a percentage gap
+      // is resolved against the ul's own content-box width, which already
+      // tracks the item's width closely at every breakpoint. Swept
+      // empirically from 20% up (each value re-measured the same way):
+      // 20%=72% overlap, 50%=40%, 75%=11%, 90%=0%, confirmed 0% again at
+      // 100%. 90% is the tightest value with zero measured overlap at
+      // 390px/1440px/the 812px breakpoint zone -- a full cycle (one reading
+      // pass + the empty gap) takes ~11s instead of ~33s at 100%, visibly
+      // faster and less "dead" without reintroducing any collision. The
+      // drift itself (Framer's own JS, untouched here) keeps running
+      // exactly as designed.
+      //
+      // .framer-1o5g5u1 / .framer-qfrgms / .framer-7hqcq2 / .framer-2wscqo /
+      // .framer-120ggkx / .framer-1lpniya / .framer-dgarai / .framer-rsqvqi
+      // { max-width: 1800px }: every major section on this site (nav, hero,
+      // and the rest of each page's content "Container" wrappers) shares
+      // one consistent design token: max-width:1200px, centered. At normal
+      // zoom that's a design choice (cap line length on wide monitors); at
+      // a zoomed-OUT browser -- which *increases* the effective CSS-pixel
+      // viewport, the opposite of zooming in -- that same 1200px cap leaves
+      // a visibly huge, unfilled black margin on both sides (reported
+      // directly, screenshot at 75% zoom on a ~1900px-wide window: the hero
+      // headline sat in a 1200px column with hundreds of empty px to either
+      // side). Widening the cap to 1800px keeps every width at or below
+      // that completely unaffected -- it only ever changes what renders
+      // beyond 1800px of effective viewport, i.e. exactly the zoomed-out/
+      // ultrawide case this was reported from -- while still capping line
+      // length at some point rather than letting text stretch edge-to-edge
+      // on a 4K display.
       style.textContent = `
-        /* Always force black background on html and body */
         html, body {
           background: #000000 !important;
           background-color: #000000 !important;
         }
-
-        /*
-         * Site-wide safety net against stray horizontal bleed (components
-         * deliberately positioned off-screen via wide centered-text boxes --
-         * see .framer-qfrgms below for one confirmed instance -- plus
-         * whatever else this Framer export does the same way elsewhere).
-         * overflow-x only, never a plain overflow:hidden, so no vertical
-         * scroll-reveal animation anywhere on the page is affected.
-         */
         html {
           overflow-x: clip !important;
         }
-
-        /* Hide unwanted badge overlay and Framer branding */
         #template-overlay, #__framer-badge-container, .__framer-badge {
           display: none !important;
         }
-
-        /* Hide contact WhatsApp card if rendered */
         #zstudio-contact-wa-card {
           display: none !important;
         }
-
-        /* Hide Framer's overlapping Time container */
         .framer-1j95pa0,
         [data-framer-name="Time"] {
           display: none !important;
         }
-
-        /* Navbar container flex row */
         .framer-1o5g5u1 {
           display: flex !important;
           align-items: center !important;
@@ -1559,8 +1719,6 @@
           width: 100% !important;
           position: relative !important;
         }
-
-        /* Dedicated container for location + switcher side-by-side */
         .zstudio-nav-right {
           display: inline-flex !important;
           flex-direction: row !important;
@@ -1570,39 +1728,18 @@
           position: relative !important;
           z-index: 50 !important;
         }
-
-        /*
-         * Wraps the CTA pill + our injected location/switcher as a single
-         * flex item, so the navbar row (.framer-1o5g5u1, which distributes
-         * its DIRECT children with justify-content: space-between) still
-         * only sees the original number of top-level children. Appending
-         * rightGroup as a bare extra sibling there added a 4th child and
-         * visibly skewed/uncentered the whole header row.
-         */
         .zstudio-nav-cta-group {
           display: inline-flex !important;
           align-items: center !important;
           gap: 14px !important;
           flex-shrink: 0 !important;
         }
-
-        /*
-         * "Entre em contato agora" must sit centered on the header's own
-         * width, not next to "São Paulo, SP" (it only ended up beside it
-         * because both share .zstudio-nav-cta-group so the original
-         * 3-child space-between math on .framer-1o5g5u1 wasn't disturbed).
-         * Taking it out of that flex flow with absolute + left:50% centers
-         * it against the header container's actual width at any viewport,
-         * instead of whatever the flex distribution happened to produce.
-         * .framer-1o5g5u1 is already position:relative.
-         */
         .framer-9nc42h {
           position: absolute !important;
           left: 50% !important;
           top: 50% !important;
           transform: translate(-50%, -50%) !important;
         }
-
         .zstudio-nav-location {
           color: #ffffff !important;
           font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
@@ -1614,23 +1751,11 @@
           user-select: none !important;
           display: inline-block !important;
         }
-
-        /* Force black background on projects bottom bands and layout elements across desktop, tablet, and mobile */
         html, body {
           background-color: #000000 !important;
           background: #000000 !important;
           overscroll-behavior-y: none !important;
         }
-
-        /*
-         * The bottom white bands come from Lenis (framer-1kfxmrd-container and
-         * framer-bsobv0-container, two separate "Lenis・Smooth Scroll" component
-         * instances on this page) rubber-banding past the end of its virtual
-         * scroll content on touch devices, which briefly exposes the native
-         * <html>/<body> background beneath. overscroll-behavior-y stops the
-         * bounce; these background-color rules cover the gap in case a browser
-         * ignores it (older Safari).
-         */
         html {
           background-color: #000000 !important;
           height: 100% !important;
@@ -1650,8 +1775,6 @@
         #template-overlay {
           background-color: #000000 !important;
         }
-
-        /* Contact Form Feedback & Error Styles */
         #zstudio-form-feedback {
           width: 100% !important;
           text-align: center !important;
@@ -1665,29 +1788,10 @@
           border: 1px solid rgba(239, 68, 68, 0.9) !important;
           box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.25) !important;
         }
-
-        /*
-         * Project card titles ("Websites", "SaaS / Produto", etc.) sit in a
-         * fixed-height box (framer-nkianr, data-framer-name="Content") whose
-         * text is a couple of px taller than the box, clipping descenders
-         * ("p" in "Produto"). Growing framer-nkianr alone doesn't fix it:
-         * its own parent card (.framer-jp00ba, height:100%) ALSO clips with
-         * overflow:clip at a fixed height bound to the card/grid cell, so
-         * extra height on the inner box still gets cut off one level up.
-         * Instead, nudge the text itself up a few px so its descender clears
-         * the existing clip boundary, without changing any box's height.
-         */
         .framer-14o4nkg {
           line-height: 1.15 !important;
           transform: translateY(-3px) !important;
         }
-
-        /*
-         * Project photos (mockup/cover images bound from the CMS, rendered
-         * client-side into Backdrop layers) must be shown in full, never
-         * cropped. Framer's default "Backdrop" fill uses cover/crop sizing;
-         * force it to fit the whole image inside its frame instead.
-         */
         [data-framer-name="Backdrop"] {
           background-size: contain !important;
           background-repeat: no-repeat !important;
@@ -1696,8 +1800,6 @@
         [data-framer-name="Backdrop"] img {
           object-fit: contain !important;
         }
-
-        /* Simplified "Mais projetos" block: just the centered CTA link */
         .zstudio-more-projects-cta {
           display: flex !important;
           justify-content: center !important;
@@ -1705,20 +1807,10 @@
           width: 100% !important;
           padding: 32px 0 !important;
         }
-        /* The link itself was moved here out of a "-container" wrapper (see
-           simplifyMoreProjectsSection) that supplied its real sizing as a
-           percentage of the original "Mais projetos" grid cell -- on the
-           mobile breakpoint specifically, that percentage resolved to
-           something close to the full viewport width, so without that
-           wrapper the relocated button rendered edge-to-edge instead of as
-           the compact pill it is everywhere else on the site. Forcing it
-           back to its own content size here is what the pill actually
-           looks like at every other breakpoint. */
         .zstudio-more-projects-cta > a {
           width: fit-content !important;
           flex: none !important;
         }
-
         @media (max-width: 600px) {
           .zstudio-nav-right {
             gap: 8px !important;
@@ -1735,101 +1827,17 @@
             padding: 3px 5px !important;
           }
         }
-
-        /*
-         * .framer-1o5g5u1 is flex-flow:row with no wrap, so below ~280-300px
-         * (reachable via real browser zoom well short of the 500% this was
-         * tested against, not just exotic viewport widths) "z.studio" and
-         * "São Paulo, SP" run out of room and visibly collide -- confirmed
-         * by screenshot: still a hairline gap at 300px, fully merged into
-         * one run of text by 265px. The location string is a nice-to-have,
-         * not load-bearing, so it's the one that gives way; the language
-         * switcher (the thing people actually use) keeps its space.
-         */
         @media (max-width: 400px) {
           .zstudio-nav-location {
             display: none !important;
           }
         }
-
-        /*
-         * Defense in depth: Framer's own .framer-qfrgms (the Hero section's
-         * direct content wrapper) sets overflow:visible, and #hero's own
-         * <h1> reports two DOM copies near the 810px breakpoint (the ticker
-         * component's own seamless-loop duplicate -- see the ticker-freeze
-         * rule below for the real mechanism and root-cause fix). Clipping
-         * horizontally only (never overflow:hidden outright) means nothing
-         * in this section can ever bleed past its own box, without touching
-         * whatever vertical bleed its scroll-reveal entrance animations
-         * rely on.
-         */
         .framer-qfrgms {
           overflow-x: clip !important;
         }
-
-        /*
-         * NOT frozen (an earlier version of this stylesheet forced this
-         * <ul>'s transform to a fixed translateX(0), killing its motion
-         * entirely). The Hero headline's continuous horizontal drift is
-         * this site's own design -- a Framer "Ticker" component, part of
-         * the portfolio's visual identity -- and was never reported as
-         * broken on its own; it was found as a side effect while
-         * investigating an unrelated zoom/overflow bug, and a single
-         * screenshot catching it mid-scroll (the tail of one loop pass and
-         * the head of the next both partially visible, with a gap between
-         * them) is the normal, expected look of ANY continuously-scrolling
-         * marquee paused at an arbitrary instant -- not evidence it's
-         * stuck or malfunctioning. Re-verify with live sampling before
-         * ever reaching for a freeze here again: this component's <ul>
-         * transform moving at a constant rate with no deceleration is
-         * exactly what a correctly-functioning infinite marquee looks
-         * like, not proof of a bug.
-         */
-
-        /*
-         * The actual, measurable defect in that same component: its <ul>
-         * (class-less, targeted via its parent .framer-1v4qmj0) has
-         * gap:10px between the real item and Framer's own runtime-added
-         * duplicate (for seamless looping), but each item is nearly as
-         * wide as its own clip window (measured equal at some breakpoints).
-         * Sampled over a full ~19s cycle at 1440px: only 13 of 92 frames
-         * (14%) showed one clean instance of the headline -- the other 86%
-         * showed both the outgoing and incoming copies simultaneously,
-         * which reads as broken/colliding text, not a deliberate design
-         * choice. A fixed px gap can't fix this across breakpoints (item
-         * width varies with viewport), but a percentage gap is resolved
-         * against the ul's own content-box width, which already tracks the
-         * item's width closely at every breakpoint. Swept empirically from
-         * 20% up (each value re-measured the same way): 20%=72% overlap,
-         * 50%=40%, 75%=11%, 90%=0%, confirmed 0% again at 100%. 90% is the
-         * tightest value with zero measured overlap at 390px/1440px/the
-         * 812px breakpoint zone -- a full cycle (one reading pass + the
-         * empty gap) takes ~11s instead of ~33s at 100%, visibly faster
-         * and less "dead" without reintroducing any collision. The drift
-         * itself (Framer's own JS, untouched here) keeps running exactly
-         * as designed.
-         */
         .framer-1v4qmj0 > ul {
           gap: 90% !important;
         }
-
-        /*
-         * Every major section on this site (nav, hero, and the rest of the
-         * page's content "Container" wrappers) shares one consistent design
-         * token: max-width:1200px, centered. At normal zoom that's a design
-         * choice (cap line length on wide monitors); at a zoomed-OUT
-         * browser -- which *increases* the effective CSS-pixel viewport,
-         * the opposite of zooming in -- that same 1200px cap leaves a
-         * visibly huge, unfilled black margin on both sides (reported
-         * directly, screenshot at 75% zoom on a ~1900px-wide window: the
-         * hero headline sits in a 1200px column with hundreds of empty px
-         * to either side). Widening the cap to 1800px keeps every width at
-         * or below that completely unaffected -- it only ever changes what
-         * renders beyond 1800px of effective viewport, i.e. exactly the
-         * zoomed-out/ultrawide case this was reported from -- while still
-         * capping line length at some point rather than letting text
-         * stretch edge-to-edge on a 4K display.
-         */
         .framer-1o5g5u1,
         .framer-qfrgms,
         .framer-7hqcq2,
