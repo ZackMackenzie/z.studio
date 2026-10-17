@@ -579,16 +579,42 @@
     return "pt";
   }
 
+  // A plain instant text swap reads as a glitch (everything on the page
+  // jump-cuts to new words mid-view); requested site-wide as "elements
+  // should have an appear animation, already showing the target language
+  // when they do." Rather than choreograph per-element reveal animations
+  // across 8 structurally different pages (high risk of fighting Framer's
+  // own hydration, the exact class of bug behind the Começar-button and
+  // Hero-ticker fixes earlier this session), this dips the whole page's
+  // opacity down, swaps every string while it's barely visible, then lets
+  // it fade back in already correct -- one global transition instead of
+  // dozens of local ones, so it can't drift out of sync with whatever any
+  // individual page happens to contain.
   function setActiveLang(lang) {
     if (lang !== "pt" && lang !== "en" && lang !== "es") return;
     try {
       localStorage.setItem("zstudio_lang", lang);
     } catch(e) {}
-    document.documentElement.setAttribute("data-zstudio-lang", lang);
-    document.documentElement.setAttribute("lang", lang === "pt" ? "pt-BR" : lang);
-    applyTranslations();
-    updateWhatsAppLinks();
-    updateSwitcherUI();
+
+    function applyLangChange() {
+      document.documentElement.setAttribute("data-zstudio-lang", lang);
+      document.documentElement.setAttribute("lang", lang === "pt" ? "pt-BR" : lang);
+      applyTranslations();
+      updateWhatsAppLinks();
+      updateSwitcherUI();
+    }
+
+    const reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduceMotion) {
+      applyLangChange();
+      return;
+    }
+
+    document.documentElement.style.opacity = "0.4";
+    setTimeout(() => {
+      applyLangChange();
+      document.documentElement.style.opacity = "1";
+    }, 160);
   }
 
   function getPageContext() {
@@ -882,6 +908,19 @@
         wrapper.appendChild(a);
       });
     });
+  }
+
+  // See the html[data-zstudio-hero-force-visible] CSS rule for the full
+  // rationale. Deliberately called once from init() only, never from the
+  // repair cycle -- this is a one-shot "guarantee visible on this page
+  // load" fix, not a persistent state to keep re-applying, and the ~2.5s
+  // timeout is what hands control back to Framer's own continuous drift.
+  function ensureHeroVisibleOnLoad() {
+    if (!document.querySelector(".framer-1v4qmj0 > ul")) return;
+    document.documentElement.setAttribute("data-zstudio-hero-force-visible", "true");
+    setTimeout(() => {
+      document.documentElement.removeAttribute("data-zstudio-hero-force-visible");
+    }, 400);
   }
 
   // REMOVED (was: badge.remove() on #__framer-badge-container). That
@@ -1631,6 +1670,14 @@
       // overflow-x only, never plain overflow:hidden, so no vertical
       // scroll-reveal animation anywhere on the page is affected.
       //
+      // html { transition: opacity } (+ the reduced-motion override right
+      // after it): the site-wide language-switch cross-fade. setActiveLang()
+      // drops <html>'s opacity to 0.4, swaps every string on the page while
+      // it's dipped, then lets this transition bring it back to 1 --
+      // skipped entirely in JS (not just here) for prefers-reduced-motion,
+      // this CSS-level guard is just a second safety net in case opacity
+      // is ever toggled some other way.
+      //
       // #template-overlay / #__framer-badge-container / .__framer-badge:
       // hide the Framer branding badge and template-editor overlay.
       //
@@ -1699,6 +1746,33 @@
       // Backdrop layers) must be shown in full, never cropped. Framer's
       // default "Backdrop" fill uses cover/crop sizing; force it to fit the
       // whole image inside its frame instead.
+      //
+      // img[src*="thumb-websites"]: same "never crop a mockup" principle,
+      // extended to a spot that principle didn't yet cover -- the home
+      // page's "Websites" service-category card uses a different structure
+      // (.framer-jp00ba, not a Backdrop layer), and its object-fit:cover
+      // was cropping away the ENTIRE top nav bar and bottom footer of the
+      // actual website screenshot it displays, leaving only the middle
+      // section visible (confirmed by directly comparing cover vs contain
+      // screenshots -- contain reveals "Casa Serena" branding, full nav
+      // links, and the site's footer, none of which render at all under
+      // cover). Scoped to this one image specifically (by its filename, not
+      // a blanket rule on every card) since the other 3 category cards show
+      // photography/3D renders rather than screenshots with their own UI
+      // chrome, where a full-bleed cover crop is more likely the intended
+      // look, not an unwanted crop -- no complaint was raised about those.
+      //
+      // @media(max-width:809.98px) .framer-nlgv0n: below the mobile
+      // breakpoint, the home page's service-category grid switches from a
+      // 2-column CSS grid (gap:20px, reasonable, left untouched) to a
+      // single-column flex stack (Framer's own rule:
+      // .framer-yWNUb .framer-nlgv0n{...gap:22px...}) -- and each card's
+      // title sits in its own fixed-height box with only 3px of vertical
+      // padding, so with just 22px between stacked cards, a title ends up
+      // sitting almost flush against the next card's image, reported as
+      // everything feeling crammed together. Widened to 48px, mobile only
+      // -- the desktop grid already looked properly spaced and wasn't
+      // part of the complaint.
       //
       // .zstudio-more-projects-cta: simplified "Mais projetos" block, just
       // the centered CTA link.
@@ -1780,6 +1854,39 @@
       // drift itself (Framer's own JS, untouched here) keeps running
       // exactly as designed.
       //
+      // html[data-zstudio-hero-force-visible] .framer-1v4qmj0 > ul: even
+      // with the gap fixed, the drift is still continuous and starts from
+      // wherever Framer's own animation happens to be in its cycle at
+      // mount -- meaning the headline's actual on-screen visibility at the
+      // moment a fresh page finishes loading isn't guaranteed, confirmed
+      // directly: repeated loads sometimes showed it immediately, sometimes
+      // showed nothing for the first stretch of the cycle. Reported
+      // directly as the most important content on the page being too slow
+      // to appear. See ensureHeroVisibleOnLoad() for the one-time,
+      // load-only fix this rule backs: force it on screen for the first
+      // 400ms via this toggleable attribute, then remove it and let
+      // Framer's own continuous drift carry on from there.
+      //
+      // Known trade-off, deliberately accepted rather than engineered
+      // around: Framer keeps a logical/internal clock running the whole
+      // time this override is masking the drift visually, so lifting the
+      // override can make the transform jump noticeably (not a small
+      // correction -- measured in the hundreds to low thousands of px,
+      // regardless of how short this window is) rather than continuing
+      // smoothly from 0. Tried and abandoned two fixes for that jump: a
+      // matching CSS transition on release (Framer's own per-frame updates
+      // to the same property fight a transition instead of composing with
+      // it) and masking it behind a brief opacity dip, the same trick as
+      // the language-switch cross-fade elsewhere in this file (the jump
+      // kept landing outside the dip's actual
+      // opacity-zero window in practice, not reliably hidden). Given the
+      // actual complaint was specifically "not visible soon enough," not
+      // "the drift isn't perfectly continuous," shipping the guaranteed
+      // -visible fix with this occasional secondary jump is a better
+      // outcome than not shipping it while chasing a fully seamless
+      // handoff against an animation whose internal timing isn't directly
+      // observable.
+      //
       // .framer-1o5g5u1 / .framer-qfrgms / .framer-7hqcq2 / .framer-2wscqo /
       // .framer-120ggkx / .framer-1lpniya / .framer-dgarai / .framer-rsqvqi
       // { max-width: 1800px }: every major section on this site (nav, hero,
@@ -1796,7 +1903,18 @@
       // beyond 1800px of effective viewport, i.e. exactly the zoomed-out/
       // ultrawide case this was reported from -- while still capping line
       // length at some point rather than letting text stretch edge-to-edge
-      // on a 4K display.
+      // on a 4K display. .framer-aamhva (the "Projects"/"Serviços" section's
+      // own container) was missing from this list originally -- the audit
+      // that built it only matched simple single-class selectors
+      // (`.framer-x{...max-width:1200px...}`), and this one is only ever
+      // set via a compound, breakpoint-scoped selector
+      // (`.framer-yWNUb .framer-aamhva,.framer-yWNUb .framer-7hqcq2{...}`),
+      // so it silently stayed capped at 1200px while everything around it
+      // widened to 1800px -- reported as that section looking stuck in a
+      // corner relative to its now-wider neighbors. Re-swept every page
+      // with a selector-aware (not just single-class) search before adding
+      // it here, to catch anything else with the same compound-selector
+      // blind spot; nothing else turned up.
       style.textContent = `
         html, body {
           background: #000000 !important;
@@ -1804,6 +1922,14 @@
         }
         html {
           overflow-x: clip !important;
+        }
+        html {
+          transition: opacity 0.18s ease !important;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          html {
+            transition: none !important;
+          }
         }
         #template-overlay, #__framer-badge-container, .__framer-badge {
           display: none !important;
@@ -1903,6 +2029,14 @@
         [data-framer-name="Backdrop"] img {
           object-fit: contain !important;
         }
+        img[src*="thumb-websites"] {
+          object-fit: contain !important;
+        }
+        @media (max-width: 809.98px) {
+          .framer-nlgv0n {
+            gap: 48px !important;
+          }
+        }
         .zstudio-more-projects-cta {
           display: flex !important;
           justify-content: center !important;
@@ -1963,6 +2097,10 @@
         .framer-1v4qmj0 > ul {
           gap: 90% !important;
         }
+        html[data-zstudio-hero-force-visible] .framer-1v4qmj0 > ul {
+          opacity: 1 !important;
+          transform: translateX(0px) !important;
+        }
         .framer-1o5g5u1,
         .framer-qfrgms,
         .framer-7hqcq2,
@@ -1970,7 +2108,8 @@
         .framer-120ggkx,
         .framer-1lpniya,
         .framer-dgarai,
-        .framer-rsqvqi {
+        .framer-rsqvqi,
+        .framer-aamhva {
           max-width: 1800px !important;
         }
       `;
@@ -2348,6 +2487,7 @@
     injectSocialLinks();
     injectContactWhatsAppCard();
     initContactForm();
+    ensureHeroVisibleOnLoad();
 
     // Observe DOM mutations to preserve translations, switcher, WhatsApp links, and dedup state across Framer updates
     let debounceTimer;
