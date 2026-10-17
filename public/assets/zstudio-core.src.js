@@ -1333,6 +1333,29 @@
     });
   }
 
+  // Every project-thumbnail <img> on the homepage and /projects ships with
+  // the exact same generic alt text, "Mockup image" -- confirmed via a
+  // direct audit of both pages' static source. The two pages don't share
+  // image files (the homepage uses human-named thumb-*.webp files, the
+  // full /projects grid uses Framer's hashed originals), so there's no
+  // single filename pattern to key off. Every card already carries its
+  // own category name as a heading right next to the image though
+  // (.framer-jp00ba > ... > .framer-nkianr "Content" > h3), the same
+  // approved text ("Websites", "Identidade de Marca", etc.) in both
+  // places -- read that instead of hardcoding filenames, so this covers
+  // both pages uniformly and nothing new is invented, only restated.
+  function fixThumbnailAltText() {
+    document.querySelectorAll(".framer-jp00ba").forEach(card => {
+      const img = card.querySelector(".framer-8mr5mw img");
+      const heading = card.querySelector(".framer-nkianr h3, .framer-nkianr h4");
+      if (!img || !heading) return;
+      const name = heading.textContent.trim();
+      if (!name) return;
+      const alt = `Mockup de projeto de ${name} da z.studio`;
+      if (img.getAttribute("alt") !== alt) img.setAttribute("alt", alt);
+    });
+  }
+
   // The "Começar" CTA's own one-shot entrance animation (a Framer Motion
   // effect, triggered on scroll/mount) splits its text into one
   // <div class="char"> per LETTER ("C","o","m",...), fading every one of
@@ -2546,6 +2569,7 @@
     ensureWebsitesProjectCard();
     ensureHomeThumbnailsFillSquares();
     fixHeadingSemantics();
+    fixThumbnailAltText();
     fixBrandCasing();
     removeComecarCTAExceptHome();
     removeEmptyFloatingCTA();
@@ -2584,6 +2608,7 @@
         ensureWebsitesProjectCard();
         ensureHomeThumbnailsFillSquares();
         fixHeadingSemantics();
+        fixThumbnailAltText();
         fixBrandCasing();
         removeComecarCTAExceptHome();
         removeEmptyFloatingCTA();
