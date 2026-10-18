@@ -913,14 +913,141 @@
   // See the html[data-zstudio-hero-force-visible] CSS rule for the full
   // rationale. Deliberately called once from init() only, never from the
   // repair cycle -- this is a one-shot "guarantee visible on this page
-  // load" fix, not a persistent state to keep re-applying, and the ~2.5s
+  // load" fix, not a persistent state to keep re-applying, and this
   // timeout is what hands control back to Framer's own continuous drift.
+  // Raised from an earlier 400ms to 3000ms: 400ms reliably covered the
+  // very first paint, but a screenshot taken a second or so later (a
+  // completely normal amount of time for a real visitor to still be
+  // looking at the hero) could still land in a gap of Framer's own
+  // drift cycle and show nothing, since releasing the override hands
+  // back to whatever point that drift has reached on its own clock,
+  // confirmed directly via a screenshot at that timing. 3000ms is still
+  // well inside the ~11s full cycle (gap tuned elsewhere in this file),
+  // so the ticker is unmistakably still a living, moving element, not a
+  // frozen one -- it just stays on-screen for the realistic window
+  // where a visitor's first look actually happens.
   function ensureHeroVisibleOnLoad() {
     if (!document.querySelector(".framer-1v4qmj0 > ul")) return;
     document.documentElement.setAttribute("data-zstudio-hero-force-visible", "true");
     setTimeout(() => {
       document.documentElement.removeAttribute("data-zstudio-hero-force-visible");
-    }, 400);
+    }, 3000);
+  }
+
+  // Small editorial accents (an eyebrow label + a bracketed section index,
+  // e.g. "[ 01 ]") absolutely positioned inside .framer-qfrgms (the Hero
+  // Container, confirmed position:relative already) rather than inserted
+  // into its flex flow. That flow is exactly 2 children laid out with
+  // place-content:flex-end and a fixed 200px gap -- learned earlier this
+  // session (the nav-row fix) that adding a 3rd flex child shifts that
+  // kind of layout math and visibly skews it. Absolute positioning
+  // sidesteps that entirely, same technique already used for the nav's
+  // own status-dot indicator (.framer-9nc42h). Both are aria-hidden: the
+  // H1 already carries the real content, these are purely decorative.
+  function injectHeroEditorialAccents() {
+    const hero = document.querySelector(".framer-qfrgms");
+    if (!hero) return;
+    if (!hero.querySelector(".zstudio-hero-eyebrow")) {
+      const eyebrow = document.createElement("span");
+      eyebrow.className = "zstudio-hero-eyebrow";
+      eyebrow.setAttribute("aria-hidden", "true");
+      eyebrow.textContent = "( Estúdio Digital )";
+      hero.appendChild(eyebrow);
+    }
+    if (!hero.querySelector(".zstudio-hero-index")) {
+      const index = document.createElement("span");
+      index.className = "zstudio-hero-index";
+      index.setAttribute("aria-hidden", "true");
+      index.textContent = "[ 01 ]";
+      hero.appendChild(index);
+    }
+  }
+
+  // Scroll-reveal motion system: the Projects/About/CTA sections and each
+  // project card fade/rise into place the first time they cross into
+  // view, instead of simply existing on page load same as everything
+  // else. One-shot per element (unobserve after it reveals -- scrolling
+  // back up never re-hides it, per this file's existing no-scroll-
+  // hijacking stance), reduced-motion skips straight to the visible end
+  // state. A single shared IntersectionObserver is created once, but
+  // which elements get tagged and handed to it runs on every repair
+  // cycle, not just once from init() -- a first version gated the whole
+  // thing behind a one-time flag and it silently never did anything,
+  // because Framer's own hydration reconciliation resets a <section>'s
+  // className after this file's init() already ran (same root cause as
+  // every other inject-on-every-cycle function in this file), stripping
+  // the freshly-added "zstudio-reveal" class before the page even
+  // finished loading. Checking for the class instead of a boolean flag
+  // makes re-running this safe and idempotent: already-tagged elements
+  // are skipped, newly-(re)rendered ones get caught on the next cycle.
+  // Project cards get a small staggered transition-delay by their index
+  // among siblings so a grid coming into view cascades instead of
+  // popping in all at once.
+  let zstudioRevealObserver = null;
+  function initScrollReveal() {
+    const reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const sections = document.querySelectorAll(
+      'section[data-framer-name="Projects"], section[data-framer-name="About"], section[data-framer-name="CTA"]'
+    );
+    const cards = document.querySelectorAll(".framer-jp00ba");
+
+    cards.forEach((card, i) => {
+      if (!card.style.transitionDelay) card.style.transitionDelay = (i % 4) * 90 + "ms";
+    });
+
+    const targets = [...sections, ...cards].filter(
+      el => !el.classList.contains("zstudio-reveal") && !el.classList.contains("zstudio-reveal-visible")
+    );
+    if (!targets.length) return;
+
+    if (reduceMotion || !("IntersectionObserver" in window)) {
+      targets.forEach(el => el.classList.add("zstudio-reveal-visible"));
+      return;
+    }
+
+    if (!zstudioRevealObserver) {
+      zstudioRevealObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("zstudio-reveal-visible");
+            zstudioRevealObserver.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.12, rootMargin: "0px 0px -60px 0px" });
+    }
+
+    targets.forEach(el => {
+      el.classList.add("zstudio-reveal");
+      zstudioRevealObserver.observe(el);
+    });
+  }
+
+  // Nav scroll state: a thin top-of-section black bar with nothing to
+  // separate it from the page gains a subtle bottom border once the user
+  // has actually scrolled, giving the header a sense of sitting above the
+  // content rather than being painted flat onto it. One scroll listener,
+  // rAF-throttled, toggling a single class -- no layout read in the
+  // handler itself, so this can't contend with the hero ticker's own
+  // per-frame work.
+  let zstudioNavScrollInitialized = false;
+  function initNavScrollState() {
+    if (zstudioNavScrollInitialized) return;
+    zstudioNavScrollInitialized = true;
+    let ticking = false;
+    function apply() {
+      const scrolled = window.scrollY > 24;
+      document.querySelectorAll("nav").forEach(nav => {
+        nav.classList.toggle("zstudio-nav-scrolled", scrolled);
+      });
+      ticking = false;
+    }
+    window.addEventListener("scroll", () => {
+      if (!ticking) {
+        requestAnimationFrame(apply);
+        ticking = true;
+      }
+    }, { passive: true });
+    apply();
   }
 
   // REMOVED (was: badge.remove() on #__framer-badge-container). That
@@ -1969,6 +2096,57 @@
       // :focus) so the existing mouse/touch-driven visual design is
       // completely unaffected -- the ring only ever appears for real
       // keyboard tabbing.
+      //
+      // .framer-qfrgms { animation: zstudio-hero-entrance }: the hero
+      // previously had no load-time entrance at all -- it was simply
+      // present, fully formed, the instant the page painted, while the
+      // headline itself is a continuously-drifting ticker that (per
+      // ensureHeroVisibleOnLoad()'s own notes) isn't guaranteed to be
+      // on-screen at that exact instant. A baseline screenshot taken
+      // ~1s after load during this work showed the hero essentially
+      // empty for that reason. This animates the whole Hero Container
+      // (not the ticker's own transform, which Framer's JS drives on its
+      // own clock -- animating a DIFFERENT property on a DIFFERENT
+      // element avoids the force-visible mechanism's already-documented
+      // conflict) with a simple fade/rise on first paint, independent of
+      // wherever the ticker's internal cycle happens to be.
+      //
+      // .zstudio-hero-eyebrow / .zstudio-hero-index: small decorative
+      // "( Estúdio Digital )" / "[ 01 ]" accents, aria-hidden since the
+      // H1 already carries the real content. Absolutely positioned
+      // inside .framer-qfrgms (already position:relative) rather than
+      // inserted into its flex flow, which is exactly 2 children laid
+      // out with a fixed 200px gap -- adding a 3rd flex child would
+      // shift that math the same way an earlier nav-row fix documented.
+      // Hidden below 810px: the mobile Hero Container drops to
+      // height:min-content with a much tighter gap, and there's no safe
+      // room to float decorative text over it without risking overlap.
+      //
+      // .zstudio-reveal / .zstudio-reveal-visible: the fade/rise state
+      // pair for the scroll-triggered reveal system (see
+      // initScrollReveal()) applied to the Projects/About/CTA sections
+      // and each project card.
+      //
+      // nav { border-bottom: ... transparent } / .zstudio-nav-scrolled:
+      // the header had zero visual separation from page content it sits
+      // above once scrolled -- a transparent border that only gets a
+      // visible color after initNavScrollState() detects real scroll
+      // keeps the top-of-page look identical while giving the header a
+      // sense of sitting above the content once there's something under
+      // it to separate from.
+      //
+      // .framer-nlgv0n { grid-template-columns: 1.25fr 1fr } (>=810px
+      // only): the 4 project cards were an exactly even 2x2 grid --
+      // confirmed via the shared max-width/gap rules already in this
+      // file. A uniform ratio shift (left column cards larger than right
+      // column) breaks that uniformity into a deliberate asymmetry
+      // without depending on which of the two dual-SSR-variant nodes per
+      // card happens to be the visible one (nth-child-based per-card
+      // spanning would've needed to know that order; a column-ratio
+      // change doesn't care which variant is showing). Left untouched
+      // below 810px, where the grid already collapses to a single
+      // column's worth of stacked full-width cards per the mobile gap
+      // fix elsewhere in this file.
       style.textContent = `
         html, body {
           background: #000000 !important;
@@ -2204,6 +2382,75 @@
         select:focus-visible {
           outline: 2px solid #ffffff !important;
           outline-offset: 3px !important;
+        }
+        .framer-qfrgms {
+          animation: zstudio-hero-entrance 900ms cubic-bezier(0.16, 1, 0.3, 1) both !important;
+        }
+        @keyframes zstudio-hero-entrance {
+          from { opacity: 0; transform: translateY(16px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .zstudio-hero-eyebrow {
+          position: absolute !important;
+          top: 48px !important;
+          left: 50% !important;
+          transform: translateX(-50%) !important;
+          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+          font-size: 12px !important;
+          font-weight: 500 !important;
+          letter-spacing: 0.14em !important;
+          text-transform: uppercase !important;
+          color: rgba(255, 255, 255, 0.5) !important;
+          white-space: nowrap !important;
+          z-index: 2 !important;
+        }
+        .zstudio-hero-index {
+          position: absolute !important;
+          top: 48px !important;
+          right: 20px !important;
+          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+          font-size: 12px !important;
+          font-weight: 500 !important;
+          letter-spacing: 0.08em !important;
+          color: rgba(255, 255, 255, 0.4) !important;
+          z-index: 2 !important;
+        }
+        @media (max-width: 809.98px) {
+          .zstudio-hero-eyebrow,
+          .zstudio-hero-index {
+            display: none !important;
+          }
+        }
+        .zstudio-reveal {
+          opacity: 0;
+          transform: translateY(32px);
+          transition: opacity 600ms cubic-bezier(0.16, 1, 0.3, 1), transform 600ms cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .zstudio-reveal-visible {
+          opacity: 1 !important;
+          transform: translateY(0) !important;
+        }
+        nav {
+          transition: border-color 300ms ease, box-shadow 300ms ease !important;
+          border-bottom: 1px solid transparent !important;
+        }
+        nav.zstudio-nav-scrolled {
+          border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+        }
+        @media (min-width: 810px) {
+          .framer-nlgv0n {
+            grid-template-columns: 1.25fr 1fr !important;
+          }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .framer-qfrgms {
+            animation: none !important;
+          }
+          .zstudio-reveal {
+            transition: none !important;
+            opacity: 1 !important;
+            transform: none !important;
+          }
         }
       `;
     }
@@ -2582,6 +2829,9 @@
     injectContactWhatsAppCard();
     initContactForm();
     ensureHeroVisibleOnLoad();
+    injectHeroEditorialAccents();
+    initScrollReveal();
+    initNavScrollState();
 
     // Observe DOM mutations to preserve translations, switcher, WhatsApp links, and dedup state across Framer updates
     let debounceTimer;
@@ -2620,6 +2870,8 @@
         injectSocialLinks();
         injectContactWhatsAppCard();
         initContactForm();
+        injectHeroEditorialAccents();
+        initScrollReveal();
       }, 50);
     });
 
