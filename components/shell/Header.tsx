@@ -58,11 +58,11 @@ export function Header() {
         href="/"
         ref={navLogoRef}
         id="zs-navlogo"
-        aria-label="z.studio"
+        aria-label="Zack Rodrigues"
         className="zs-wordmark-header zs-fade-hover"
-        style={{ opacity: 0, color: "inherit", display: "inline-block", minHeight: 44 }}
+        style={{ opacity: 0, color: "inherit", display: "inline-block", minHeight: 44, whiteSpace: "nowrap" }}
       >
-        z.studio
+        Zack Rodrigues
       </TLink>
       <span
         className="zs-lbl zs-navmid"

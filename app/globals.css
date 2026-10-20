@@ -35,6 +35,7 @@
 }
 html {
   scroll-behavior: smooth;
+  background: #000000;
 }
 body {
   margin: 0;
@@ -77,7 +78,10 @@ button {
 
 /* ---------- typography scale (README §3) ---------- */
 .zs-wordmark-loader {
-  font: 400 clamp(52px, 17vw, 280px) / 1 var(--font-body);
+  /* clamp shrunk (and glyph stagger tightened in Intro.tsx) when the
+     loader wordmark changed from "z.studio" (8 glyphs) to "Zack
+     Rodrigues" (14, with the space) -- same proportions, longer string. */
+  font: 400 clamp(26px, 8.5vw, 140px) / 1 var(--font-body);
   letter-spacing: -0.045em;
 }
 .zs-wordmark-header {
@@ -276,6 +280,13 @@ button {
 @media (max-width: 380px) {
   #zs-navlogo {
     font-size: 19px !important;
+  }
+}
+@media (max-width: 340px) {
+  /* "z.studio" (8 chars) never needed this; "Zack Rodrigues" (14, with
+     a space) does on the narrowest phones. */
+  #zs-navlogo {
+    font-size: 15px !important;
   }
 }
 @media (prefers-reduced-motion: reduce) {

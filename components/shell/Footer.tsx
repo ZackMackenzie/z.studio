@@ -1,10 +1,13 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { useT } from "@/lib/i18n";
 import { TLink } from "@/components/TLink";
 
 export function Footer() {
   const t = useT();
+  const pathname = usePathname();
+  const isHome = pathname === "/";
 
   function backToTop(e: React.MouseEvent) {
     e.preventDefault();
@@ -27,7 +30,7 @@ export function Footer() {
         }}
       >
         <span style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          <span className="zs-wordmark-footer">z.studio</span>
+          <span className="zs-wordmark-footer">Zack Rodrigues</span>
           <span className="zs-lbl" style={{ textTransform: "none", letterSpacing: ".01em", fontWeight: 400, fontSize: 13 }}>
             {t("foot_tag")}
           </span>
@@ -54,14 +57,16 @@ export function Footer() {
           <TLink href="/terms" className="zs-lbl footer-link" style={{ minHeight: 44, display: "inline-flex", alignItems: "center" }}>
             {t("foot_terms")}
           </TLink>
-          <a
-            href="#top"
-            onClick={backToTop}
-            className="zs-lbl footer-link"
-            style={{ minHeight: 44, display: "inline-flex", alignItems: "center" }}
-          >
-            {t("foot_top")}
-          </a>
+          {!isHome && (
+            <a
+              href="#top"
+              onClick={backToTop}
+              className="zs-lbl footer-link"
+              style={{ minHeight: 44, display: "inline-flex", alignItems: "center" }}
+            >
+              {t("foot_top")}
+            </a>
+          )}
         </span>
         <span className="zs-lbl" style={{ flexBasis: "100%", marginTop: 8 }}>
           {t("foot_copy")}

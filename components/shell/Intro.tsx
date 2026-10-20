@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useT } from "@/lib/i18n";
 import { useShell } from "@/lib/shell-state";
 
-const GLYPHS = ["z", ".", "s", "t", "u", "d", "i", "o"];
+const GLYPHS = ["Z", "a", "c", "k", " ", "R", "o", "d", "r", "i", "g", "u", "e", "s"];
 const EASE = "cubic-bezier(.16,1,.3,1)";
 const EASE_IN_OUT = "cubic-bezier(.76,0,.24,1)";
 
@@ -59,7 +59,7 @@ export function Intro({ onDone }: { onDone: () => void }) {
     glyphRefs.current.forEach((g, i) => {
       g.animate([{ transform: "translateY(108%)" }, { transform: "none" }], {
         duration: 1100,
-        delay: 250 + i * 85,
+        delay: 250 + i * 46,
         easing: EASE,
         fill: "both",
       });
@@ -160,7 +160,7 @@ export function Intro({ onDone }: { onDone: () => void }) {
     <div
       ref={loaderRef}
       role="status"
-      aria-label="z.studio"
+      aria-label="Zack Rodrigues"
       style={{ position: "fixed", inset: 0, zIndex: "var(--z-loader)" }}
     >
       <div ref={bgRef} style={{ position: "absolute", inset: 0, background: "#000" }} />
@@ -184,9 +184,12 @@ export function Intro({ onDone }: { onDone: () => void }) {
           style={{ display: "inline-flex", transformOrigin: "0 0", color: "#fff", mixBlendMode: "difference" }}
         >
           {GLYPHS.map((g, i) => (
-            <span key={i} style={{ overflow: "hidden", display: "block", padding: ".08em 0" }}>
+            <span
+              key={i}
+              style={{ overflow: "hidden", display: "block", padding: ".08em 0", width: g === " " ? ".235em" : undefined }}
+            >
               <span ref={registerGlyph} style={{ display: "block" }}>
-                {g}
+                {g === " " ? "" : g}
               </span>
             </span>
           ))}

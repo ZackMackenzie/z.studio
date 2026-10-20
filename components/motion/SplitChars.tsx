@@ -106,8 +106,12 @@ export function SplitChars({
                   display: "inline-block",
                   overflow: "hidden",
                   verticalAlign: "top",
-                  padding: ".14em 0 .12em",
-                  margin: "-.14em 0 -.12em",
+                  // Bottom padding/margin widened from .12em to .3em after
+                  // the live canvas tuned it -- more room below the
+                  // baseline for descenders/accents in the per-character
+                  // mask before the hidden overflow clips them.
+                  padding: ".14em 0 .3em",
+                  margin: "-.14em 0 -.3em",
                 }}
               >
                 <span ref={registerChar} style={{ display: "inline-block", transformOrigin: "0 100%" }}>
