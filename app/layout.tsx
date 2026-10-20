@@ -1,14 +1,39 @@
-import type { ReactNode } from "react"
+import type { ReactNode } from "react";
+import { Inter, Manrope } from "next/font/google";
+import { ClientShell } from "@/components/ClientShell";
+import "./globals.css";
+
+const inter = Inter({
+  subsets: ["latin", "latin-ext"],
+  weight: ["400", "700"],
+  variable: "--font-inter",
+  display: "swap",
+});
+const manrope = Manrope({
+  subsets: ["latin", "latin-ext"],
+  weight: ["600", "700"],
+  variable: "--font-manrope",
+  display: "swap",
+});
 
 export const metadata = {
-  title: "Z.studio",
+  metadataBase: new URL("https://www.zstudioportifolio.com"),
+  title: { default: "Z.studio", template: "%s | Z.studio" },
   description: "Z.studio - Design, tecnologia e desenvolvimento para transformar negócios com soluções digitais sob medida.",
-}
+};
+
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: "#000000",
+};
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
-      <body>{children}</body>
+    <html lang="pt-BR" className={`${inter.variable} ${manrope.variable}`}>
+      <body>
+        <ClientShell>{children}</ClientShell>
+      </body>
     </html>
-  )
+  );
 }
