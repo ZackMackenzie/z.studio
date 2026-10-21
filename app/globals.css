@@ -306,8 +306,14 @@ button {
   transition: opacity 0.4s;
 }
 @media (hover: hover) and (pointer: fine) {
+  /* !important: the header logo sets its own opacity inline (toggled
+     1/0 imperatively by the intro animation, see Intro.tsx/Header.tsx),
+     which otherwise always wins over this rule regardless of
+     specificity -- confirmed directly (hover left it stuck at 1). The
+     menu/back/prev/next buttons that also use this class have no
+     competing inline opacity, so this is harmless for them either way. */
   .zs-fade-hover:hover {
-    opacity: 0.6;
+    opacity: 0.6 !important;
   }
   .footer-link {
     transition: color 0.3s;
@@ -315,17 +321,64 @@ button {
   .footer-link:hover {
     color: var(--white);
   }
-  .zs-service-row {
-    transition: padding-left 0.6s var(--ease);
+  /* Upgraded from a plain padding-left hover to match the work-item
+     pattern (rowline + roll-mask title + sibling dim), synced from the
+     Claude Design canvas. */
+  .zs-service-row [data-rowline] {
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.8s var(--ease);
   }
-  .zs-service-row:hover {
-    padding-left: 16px;
+  .zs-service-row [data-roll] {
+    transition: transform 0.7s var(--ease);
+  }
+  .zs-service-row [data-sl] {
+    transition: opacity 0.4s;
+  }
+  .zs-service-row [data-sd],
+  .zs-service-row [data-sa] {
+    transition: transform 0.6s var(--ease);
+  }
+  .zs-service-row:hover [data-rowline],
+  .zs-service-row:focus-visible [data-rowline] {
+    transform: scaleX(1);
+  }
+  .zs-service-row:hover [data-roll],
+  .zs-service-row:focus-visible [data-roll] {
+    transform: translateY(-50%);
+  }
+  .zs-service-row:hover [data-sl],
+  .zs-service-row:focus-visible [data-sl] {
+    /* !important: the label's resting opacity (.7) is set inline on the
+       same element, which otherwise always wins over a non-!important
+       stylesheet rule regardless of selector specificity -- confirmed
+       directly (hover left it stuck at .7). Same fix as the work-item
+       chip below. */
+    opacity: 1 !important;
+  }
+  .zs-service-row:hover [data-sd],
+  .zs-service-row:focus-visible [data-sd],
+  .zs-service-row:hover [data-sa],
+  .zs-service-row:focus-visible [data-sa] {
+    transform: translateX(12px);
+  }
+  .zs-services-list:has(.zs-service-row:hover) .zs-service-row:not(:hover),
+  .zs-services-list:has(.zs-service-row:focus-visible) .zs-service-row:not(:focus-visible) {
+    opacity: 0.4;
+    transition: opacity 0.5s;
+  }
+  .zs-service-row {
+    transition: opacity 0.5s;
   }
   .zs-menu-link {
     transition: padding-left 0.4s var(--ease);
   }
   .zs-menu-link:hover {
-    padding-left: 24px;
+    /* !important: the item's resting padding ("4px 0") is set inline as
+       a shorthand, which sets padding-left inline too and wins over a
+       non-!important longhand rule -- confirmed directly (hover left it
+       stuck at 0px). */
+    padding-left: 24px !important;
   }
   .zs-cta-pill {
     transition: opacity 0.3s, transform 0.3s;
@@ -356,9 +409,15 @@ button {
   }
   .zs-work-item:hover [data-chip],
   .zs-work-item:focus-visible [data-chip] {
-    opacity: 1;
+    /* !important on opacity/border-color: the chip's resting opacity
+       (.6) and border (which sets border-color as part of the shorthand)
+       are both set inline on the same element, which wins over a
+       non-!important rule regardless of selector specificity --
+       confirmed directly (hover left both stuck at resting values).
+       transform has no competing inline value, so it needs no override. */
+    opacity: 1 !important;
     transform: translate(4px, -4px);
-    border-color: rgba(255, 255, 255, 0.7);
+    border-color: rgba(255, 255, 255, 0.7) !important;
   }
   .zs-wg:has(.zs-work-item:hover) .zs-work-item:not(:hover),
   .zs-wg:has(.zs-work-item:focus-visible) .zs-work-item:not(:focus-visible) {

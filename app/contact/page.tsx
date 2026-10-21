@@ -25,7 +25,7 @@ export default function ContactPage() {
       <div className="zs-contact-links" style={{ display: "flex", flexWrap: "wrap", gap: "16px 72px" }}>
         <Reveal type="up" delay={260} as="div">
           <a
-            href="https://www.linkedin.com/in/z-studio"
+            href="https://www.linkedin.com/in/zackmackenzie"
             target="_blank"
             rel="noopener noreferrer"
             className="zs-contact-row"
@@ -38,7 +38,7 @@ export default function ContactPage() {
               </span>
             </span>
             <span className="zs-handle" style={{ display: "block", marginTop: 8, color: "var(--ink-400)" }}>
-              linkedin.com/in/z-studio
+              linkedin.com/in/zackmackenzie
             </span>
           </a>
         </Reveal>

@@ -37,7 +37,7 @@ export function Footer() {
         </span>
         <span style={{ display: "flex", gap: "8px 24px", flexWrap: "wrap" }}>
           <a
-            href="https://www.linkedin.com/in/z-studio"
+            href="https://www.linkedin.com/in/zackmackenzie"
             target="_blank"
             rel="noopener noreferrer"
             className="zs-lbl footer-link"

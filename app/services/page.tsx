@@ -20,7 +20,7 @@ export default function ServicesPage() {
           <span>{t("serv_t")}</span>
         </span>
       </div>
-      <div>
+      <div className="zs-services-list">
         {LETTERS.map((letter, i) => {
           const nameKey = SERVICES[i * 2];
           const descKey = SERVICES[i * 2 + 1];
@@ -33,16 +33,30 @@ export default function ServicesPage() {
                   openCase(i);
                 }}
                 className="zs-cap zs-service-row"
-                style={{ borderTop: "1px solid var(--line-subtle)", padding: "32px 0", color: "#fff" }}
+                style={{ position: "relative", padding: "32px 0", color: "#fff" }}
               >
-                <span className="zs-lbl" style={{ color: "inherit", opacity: 0.7 }}>
+                <span
+                  data-rowline
+                  aria-hidden="true"
+                  style={{ position: "absolute", left: 0, right: 0, top: 0, height: 1, background: "#fff" }}
+                />
+                <span
+                  aria-hidden="true"
+                  style={{ position: "absolute", left: 0, right: 0, top: 0, height: 1, background: "var(--line-subtle)" }}
+                />
+                <span data-sl className="zs-lbl" style={{ color: "inherit", opacity: 0.7 }}>
                   {letter}
                 </span>
-                <span className="zs-service-name">{t(`${nameKey}_n`)}</span>
-                <span className="zs-capd zs-body-hero" style={{ maxWidth: "none" }}>
+                <span className="zs-service-name" style={{ display: "block", overflow: "hidden", height: "1.05em" }}>
+                  <span data-roll style={{ display: "flex", flexDirection: "column" }}>
+                    <span>{t(`${nameKey}_n`)}</span>
+                    <span aria-hidden="true">{t(`${nameKey}_n`)}</span>
+                  </span>
+                </span>
+                <span data-sd className="zs-capd zs-body-hero" style={{ maxWidth: "none" }}>
                   {t(`${descKey}_l`)}
                 </span>
-                <span aria-hidden="true" style={{ textAlign: "right", font: "600 20px/1 var(--font-display)" }}>
+                <span data-sa aria-hidden="true" style={{ textAlign: "right", font: "600 20px/1 var(--font-display)" }}>
                   →
                 </span>
               </a>

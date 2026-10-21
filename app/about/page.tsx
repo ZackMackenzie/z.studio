@@ -100,7 +100,7 @@ export default function AboutPage() {
           </div>
           <Reveal type="clip" as="figure" style={{ margin: 0, maxWidth: 340, justifySelf: "end", width: "100%" }}>
             {/* eslint-disable-next-line @next/next/no-img-element -- deliberate: README calls for a plain <img>, no next/image effects/optimization on the one approved portrait */}
-            <img src="/images/zack-about.jpg" alt="Zack Rodrigues" width={1000} height={1000} style={{ display: "block", width: "100%", height: "auto" }} />
+            <img src="/images/zack-about.jpg" alt="Zack Rodrigues" width={1000} height={1000} decoding="async" style={{ display: "block", width: "100%", height: "auto" }} />
             <figcaption className="zs-lbl" style={{ color: "var(--ink-500)", marginTop: 14 }}>
               Zack Rodrigues
             </figcaption>

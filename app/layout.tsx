@@ -18,8 +18,8 @@ const manrope = Manrope({
 
 export const metadata = {
   metadataBase: new URL("https://www.zstudioportifolio.com"),
-  title: { default: "Z.studio", template: "%s | Z.studio" },
-  description: "Z.studio - Design, tecnologia e desenvolvimento para transformar negócios com soluções digitais sob medida.",
+  title: { default: "z.studio", template: "%s | z.studio" },
+  description: "z.studio - Design, tecnologia e desenvolvimento para transformar negócios com soluções digitais sob medida.",
 };
 
 export const viewport = {

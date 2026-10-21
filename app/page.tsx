@@ -31,9 +31,14 @@ export default function HomePage() {
         <Reveal type="rule" delay={700} className="zs-rule" style={{ marginBottom: 24 }} as="div" />
         <Reveal type="up" delay={850}>
           <div className="zs-hmeta">
-            <p className="zs-body-hero" style={{ margin: 0, color: "var(--ink-300)", gridColumn: "span 2" }}>
-              {t("hero_sub")}
-            </p>
+            <div style={{ gridColumn: "span 2", display: "grid", gap: 16, alignContent: "start" }}>
+              <p className="zs-body-hero" style={{ margin: 0, color: "#ffffff", maxWidth: "36ch" }}>
+                {t("hero_sub1")}
+              </p>
+              <p className="zs-body-hero" style={{ margin: 0, color: "var(--ink-300)", maxWidth: "48ch" }}>
+                {t("hero_sub2")}
+              </p>
+            </div>
             <div>
               <div className="zs-lbl" style={{ marginBottom: 10 }}>
                 {t("hero_founder")}
