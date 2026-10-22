@@ -116,6 +116,7 @@ button {
   font: 700 clamp(30px, 4.6vw, 68px) / 1.08 var(--font-display);
   letter-spacing: -0.035em;
   max-width: 20ch;
+  margin: 0 0 40px;
 }
 .zs-h2-terms {
   font: 700 clamp(36px, 6vw, 88px) / 1 var(--font-display);
@@ -215,9 +216,29 @@ button {
 }
 .zs-ab {
   display: grid;
-  grid-template-columns: minmax(0, 7fr) minmax(0, 4fr);
-  gap: 72px;
+  grid-template-columns: minmax(0, 1100px) clamp(240px, 28vw, 420px);
+  column-gap: clamp(40px, 6vw, 96px);
+  justify-content: start;
   align-items: start;
+}
+.zs-ph {
+  margin: 0;
+  width: 100%;
+  position: sticky;
+  top: 112px;
+}
+.zs-abt {
+  max-width: 56ch;
+}
+.zs-abt > * {
+  break-inside: avoid;
+}
+@media (min-width: 1280px) {
+  .zs-abt {
+    column-count: 2;
+    column-gap: 48px;
+    max-width: none;
+  }
 }
 .zs-exp {
   display: grid;
@@ -233,22 +254,10 @@ button {
   padding: 20px 0 48px;
 }
 
-@media (max-width: 1100px) {
-  .zs-ab {
-    gap: 40px;
-  }
-}
 @media (max-width: 900px) {
   .zs-wg,
   .zs-exp {
     grid-template-columns: minmax(0, 1fr);
-  }
-  .zs-ab {
-    grid-template-columns: minmax(0, 1fr);
-  }
-  .zs-ab figure {
-    order: -1;
-    max-width: 300px;
   }
   .zs-cap {
     grid-template-columns: 40px minmax(0, 1fr) 32px;
@@ -263,6 +272,18 @@ button {
   }
   .zs-navmid {
     display: none !important;
+  }
+}
+@media (max-width: 680px) {
+  .zs-ab {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 40px;
+  }
+  .zs-ab .zs-ph {
+    order: -1;
+    max-width: 320px;
+    justify-self: center;
+    position: static;
   }
 }
 @media (max-width: 600px) {

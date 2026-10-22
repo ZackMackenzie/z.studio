@@ -4,16 +4,27 @@ import { usePathname } from "next/navigation";
 import { useT } from "@/lib/i18n";
 import { TLink } from "@/components/TLink";
 
+// z.studio is a brand name that must stay lowercase even inside text
+// rendered with an uppercase label style (.zs-lbl) -- CSS text-transform
+// only changes the paint, not the DOM text, so "(z.studio)" inside an
+// uppercase span would otherwise read as "(Z.STUDIO)".
+function withBrandCasing(text: string) {
+  const BRAND = "z.studio";
+  const i = text.indexOf(BRAND);
+  if (i < 0) return text;
+  return (
+    <>
+      {text.slice(0, i)}
+      <span style={{ textTransform: "none" }}>{BRAND}</span>
+      {text.slice(i + BRAND.length)}
+    </>
+  );
+}
+
 export function Footer() {
   const t = useT();
   const pathname = usePathname();
   const isHome = pathname === "/";
-
-  function backToTop(e: React.MouseEvent) {
-    e.preventDefault();
-    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    window.scrollTo({ top: 0, behavior: reduceMotion ? "auto" : "smooth" });
-  }
 
   return (
     <div className="zs-pad" style={{ paddingBottom: 40 }}>
@@ -58,18 +69,13 @@ export function Footer() {
             {t("foot_terms")}
           </TLink>
           {!isHome && (
-            <a
-              href="#top"
-              onClick={backToTop}
-              className="zs-lbl footer-link"
-              style={{ minHeight: 44, display: "inline-flex", alignItems: "center" }}
-            >
-              {t("foot_top")}
-            </a>
+            <TLink href="/" className="zs-lbl footer-link" style={{ minHeight: 44, display: "inline-flex", alignItems: "center" }}>
+              {t("foot_home")}
+            </TLink>
           )}
         </span>
         <span className="zs-lbl" style={{ flexBasis: "100%", marginTop: 8 }}>
-          {t("foot_copy")}
+          {withBrandCasing(t("foot_copy"))}
         </span>
       </footer>
     </div>
