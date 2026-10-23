@@ -39,6 +39,7 @@ export function Header() {
   return (
     <header
       className="zs-pad"
+      data-menu={menuOpen ? "" : undefined}
       style={{
         position: "fixed",
         top: 0,

@@ -89,9 +89,11 @@ export default function AboutPage() {
               </Reveal>
             </div>
           </div>
-          <Reveal type="clip" as="figure" className="zs-ph">
-            {/* eslint-disable-next-line @next/next/no-img-element -- deliberate: README calls for a plain <img>, no next/image effects/optimization on the one approved portrait */}
-            <img src="/images/zack-about.jpg" alt="Zack Rodrigues" width={1000} height={1000} decoding="async" style={{ display: "block", width: "100%", height: "auto" }} />
+          <figure className="zs-ph">
+            <Reveal type="clip" as="div">
+              {/* eslint-disable-next-line @next/next/no-img-element -- deliberate: README calls for a plain <img>, no next/image effects/optimization on the one approved portrait */}
+              <img src="/images/zack-about.jpg" alt="Zack Rodrigues" width={1000} height={1000} decoding="async" style={{ display: "block", width: "100%", height: "auto" }} />
+            </Reveal>
             <Reveal
               type="up"
               delay={250}
@@ -105,7 +107,7 @@ export default function AboutPage() {
                 São Paulo, BR
               </span>
             </Reveal>
-          </Reveal>
+          </figure>
         </div>
       </div>
     </section>

@@ -5,29 +5,42 @@ import { useShell } from "@/lib/shell-state";
 
 type RevealType = "up" | "clip" | "rule";
 
+const EASE = "cubic-bezier(.16,1,.3,1)";
+const EASE_IN_OUT = "cubic-bezier(.76,0,.24,1)";
+
 function applyInitial(el: HTMLElement, type: RevealType) {
   if (type === "up") {
     el.style.opacity = "0";
     el.style.transform = "translateY(32px)";
-  } else if (type === "clip") {
-    el.style.clipPath = "inset(100% 0 0 0)";
+    el.style.willChange = "transform, opacity";
   } else if (type === "rule") {
     el.style.transform = "scaleX(0)";
     el.style.transformOrigin = "left";
+    el.style.willChange = "transform";
   }
 }
 
+// Clears the inline transition/will-change this reveal set, once its
+// animation is done -- otherwise an element with its own CSS :hover
+// transition (e.g. .zs-cta-pill) is stuck using the reveal's 1000ms/1400ms
+// duration for hovers forever after, since the inline value set during
+// the reveal outranks the stylesheet rule.
 function applyFinal(el: HTMLElement, type: RevealType, delay: number) {
   if (type === "up") {
-    el.style.transition = `transform 1000ms cubic-bezier(.16,1,.3,1) ${delay}ms, opacity 800ms cubic-bezier(.16,1,.3,1) ${delay}ms`;
+    el.style.transition = `transform 1000ms ${EASE} ${delay}ms, opacity 800ms ${EASE} ${delay}ms`;
     el.style.opacity = "1";
     el.style.transform = "none";
-  } else if (type === "clip") {
-    el.style.transition = `clip-path 1200ms cubic-bezier(.76,0,.24,1) ${delay}ms`;
-    el.style.clipPath = "inset(0 0 0 0)";
+    setTimeout(() => {
+      el.style.transition = "";
+      el.style.willChange = "";
+    }, 1000 + delay + 80);
   } else if (type === "rule") {
-    el.style.transition = `transform 1400ms cubic-bezier(.16,1,.3,1) ${delay}ms`;
+    el.style.transition = `transform 1400ms ${EASE} ${delay}ms`;
     el.style.transform = "none";
+    setTimeout(() => {
+      el.style.transition = "";
+      el.style.willChange = "";
+    }, 1400 + delay + 80);
   }
 }
 
@@ -47,19 +60,20 @@ export function Reveal({
   children?: ReactNode;
 }) {
   // observeRef (the outer tag, carries className/style/layout role) is
-  // always what IntersectionObserver watches. For "up"/"rule" the same
-  // element is also what gets animated -- confirmed via direct
-  // instrumentation that transform:scaleX(0)/translateY() don't disturb
-  // Chromium's intersection geometry. "clip" is different: its hidden
-  // state, clip-path:inset(100% ...), is a genuine zero-visible-area
-  // clip, and Chromium reports isIntersecting:false *forever* for an
-  // element clipped to nothing, since there's no area left to ever
-  // intersect the viewport -- confirmed the same way (an about-page
-  // portrait sitting in the middle of the viewport never revealed,
-  // logged as ratio:0 the whole time). So only "clip" gets a second,
-  // inner element: the outer stays full-area for observation, the inner
-  // carries the actual clip-path animation.
+  // always what IntersectionObserver watches. "up"/"rule" animate that
+  // same element directly -- confirmed via direct instrumentation that
+  // transform:scaleX(0)/translateY() don't disturb Chromium's
+  // intersection geometry. "clip" is a parallax-mask reveal instead of a
+  // clip-path wipe: an overflow:hidden mask div (maskRef) slides in from
+  // translateY(100%) while the content inside it (clipInnerRef) slides
+  // the opposite way from translateY(-100%) -- the two cancel out, so
+  // the content never visually moves, only the mask's reveal edge sweeps
+  // across it. Both are transform-only (GPU-composited, no paint), and
+  // neither ever clips to a zero-area box, so this sidesteps the old
+  // clip-path bug where an element clipped to inset(100% ...) reports
+  // isIntersecting:false forever.
   const observeRef = useRef<HTMLElement | null>(null);
+  const maskRef = useRef<HTMLDivElement | null>(null);
   const clipInnerRef = useRef<HTMLDivElement | null>(null);
   const { motionReady } = useShell();
   const reduceMotionRef = useRef(false);
@@ -67,7 +81,18 @@ export function Reveal({
   useLayoutEffect(() => {
     reduceMotionRef.current = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (reduceMotionRef.current) return;
-    const target = type === "clip" ? clipInnerRef.current : observeRef.current;
+    if (type === "clip") {
+      const m = maskRef.current;
+      const i = clipInnerRef.current;
+      if (m && i) {
+        m.style.transition = i.style.transition = "none";
+        m.style.transform = "translateY(100%)";
+        i.style.transform = "translateY(-100%)";
+        m.style.willChange = i.style.willChange = "transform";
+      }
+      return;
+    }
+    const target = observeRef.current;
     if (target) applyInitial(target, type);
     // Only on mount -- each page navigation remounts this component fresh.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -76,15 +101,26 @@ export function Reveal({
   useEffect(() => {
     if (!motionReady || reduceMotionRef.current) return;
     const observeEl = observeRef.current;
-    const animateEl = type === "clip" ? clipInnerRef.current : observeRef.current;
-    if (!observeEl || !animateEl) return;
+    if (!observeEl) return;
     const io = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            applyFinal(animateEl, type, delay);
-            io.unobserve(observeEl);
+          if (!entry.isIntersecting) return;
+          if (type === "clip") {
+            const m = maskRef.current;
+            const i = clipInnerRef.current;
+            if (m && i) {
+              m.style.transition = i.style.transition = `transform 1200ms ${EASE_IN_OUT} ${delay}ms`;
+              m.style.transform = i.style.transform = "none";
+              setTimeout(() => {
+                m.style.transition = i.style.transition = "";
+                m.style.willChange = i.style.willChange = "";
+              }, 1200 + delay + 80);
+            }
+          } else {
+            applyFinal(observeEl, type, delay);
           }
+          io.unobserve(observeEl);
         });
       },
       { threshold: 0.15, rootMargin: "0px 0px -6% 0px" }
@@ -96,8 +132,10 @@ export function Reveal({
   if (type === "clip") {
     return (
       <Tag ref={observeRef} className={className} style={style}>
-        <div ref={clipInnerRef} style={{ width: "100%", height: "100%" }}>
-          {children}
+        <div ref={maskRef} style={{ overflow: "hidden", pointerEvents: "none", width: "100%", height: "100%" }}>
+          <div ref={clipInnerRef} style={{ width: "100%", height: "100%" }}>
+            {children}
+          </div>
         </div>
       </Tag>
     );

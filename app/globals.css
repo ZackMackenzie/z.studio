@@ -61,6 +61,12 @@ button:focus-visible {
   outline: 2px solid var(--white);
   outline-offset: 4px;
 }
+/* header[data-menu]: while the full-screen white menu is open, the fixed
+   header sits above it (z-header > z-menu) and flips to black-on-white --
+   a white focus outline there would be invisible. */
+header[data-menu] :focus-visible {
+  outline-color: #000;
+}
 button {
   font: inherit;
 }
@@ -391,15 +397,17 @@ button {
   .zs-service-row {
     transition: opacity 0.5s;
   }
-  .zs-menu-link {
-    transition: padding-left 0.4s var(--ease);
+  .zs-menu-link > span {
+    transition: transform 0.5s var(--ease);
   }
-  .zs-menu-link:hover {
-    /* !important: the item's resting padding ("4px 0") is set inline as
-       a shorthand, which sets padding-left inline too and wins over a
-       non-!important longhand rule -- confirmed directly (hover left it
-       stuck at 0px). */
-    padding-left: 24px !important;
+  .zs-menu-link:hover > span {
+    transform: translateX(24px);
+  }
+  .zs-menu-link:focus-visible > span {
+    transform: translateX(24px);
+  }
+  .zs-menu-link:focus-visible {
+    outline-color: #000;
   }
   .zs-cta-pill {
     transition: opacity 0.3s, transform 0.3s;
