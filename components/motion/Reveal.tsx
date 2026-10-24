@@ -8,15 +8,21 @@ type RevealType = "up" | "clip" | "rule";
 const EASE = "cubic-bezier(.16,1,.3,1)";
 const EASE_IN_OUT = "cubic-bezier(.76,0,.24,1)";
 
-function applyInitial(el: HTMLElement, type: RevealType) {
+// will-change at prep time is scoped to `eager` (hero content, which
+// plays within the first second of load) rather than set for every
+// reveal on the page up front -- promoting dozens of below-the-fold
+// elements to their own compositing layer before they're anywhere near
+// playing is wasted GPU memory. Non-eager elements still get it, just
+// deferred to the moment they're actually about to animate (applyFinal).
+function applyInitial(el: HTMLElement, type: RevealType, eager: boolean) {
   if (type === "up") {
     el.style.opacity = "0";
     el.style.transform = "translateY(32px)";
-    el.style.willChange = "transform, opacity";
+    if (eager) el.style.willChange = "transform, opacity";
   } else if (type === "rule") {
     el.style.transform = "scaleX(0)";
     el.style.transformOrigin = "left";
-    el.style.willChange = "transform";
+    if (eager) el.style.willChange = "transform";
   }
 }
 
@@ -27,6 +33,7 @@ function applyInitial(el: HTMLElement, type: RevealType) {
 // the reveal outranks the stylesheet rule.
 function applyFinal(el: HTMLElement, type: RevealType, delay: number) {
   if (type === "up") {
+    el.style.willChange = "transform, opacity";
     el.style.transition = `transform 1000ms ${EASE} ${delay}ms, opacity 800ms ${EASE} ${delay}ms`;
     el.style.opacity = "1";
     el.style.transform = "none";
@@ -35,6 +42,7 @@ function applyFinal(el: HTMLElement, type: RevealType, delay: number) {
       el.style.willChange = "";
     }, 1000 + delay + 80);
   } else if (type === "rule") {
+    el.style.willChange = "transform";
     el.style.transition = `transform 1400ms ${EASE} ${delay}ms`;
     el.style.transform = "none";
     setTimeout(() => {
@@ -51,6 +59,7 @@ export function Reveal({
   className,
   style,
   children,
+  eager = false,
 }: {
   type: RevealType;
   delay?: number;
@@ -58,6 +67,9 @@ export function Reveal({
   className?: string;
   style?: CSSProperties;
   children?: ReactNode;
+  // Hero content (plays within the first second of load, before the
+  // user can scroll) -- see applyInitial.
+  eager?: boolean;
 }) {
   // observeRef (the outer tag, carries className/style/layout role) is
   // always what IntersectionObserver watches. "up"/"rule" animate that
@@ -88,12 +100,12 @@ export function Reveal({
         m.style.transition = i.style.transition = "none";
         m.style.transform = "translateY(100%)";
         i.style.transform = "translateY(-100%)";
-        m.style.willChange = i.style.willChange = "transform";
+        if (eager) m.style.willChange = i.style.willChange = "transform";
       }
       return;
     }
     const target = observeRef.current;
-    if (target) applyInitial(target, type);
+    if (target) applyInitial(target, type, eager);
     // Only on mount -- each page navigation remounts this component fresh.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

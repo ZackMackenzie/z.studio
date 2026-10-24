@@ -28,8 +28,8 @@ export default function HomePage() {
         <SplitChars text={t("hero_h")} as="h1" className="zs-h1-hero" />
       </div>
       <div>
-        <Reveal type="rule" delay={700} className="zs-rule" style={{ marginBottom: 24 }} as="div" />
-        <Reveal type="up" delay={850}>
+        <Reveal type="rule" delay={700} className="zs-rule" style={{ marginBottom: 24 }} as="div" eager />
+        <Reveal type="up" delay={850} eager>
           <div className="zs-hmeta">
             <div style={{ gridColumn: "span 2", display: "grid", gap: 16, alignContent: "start" }}>
               <p className="zs-body-hero" style={{ margin: 0, color: "#ffffff", maxWidth: "36ch" }}>

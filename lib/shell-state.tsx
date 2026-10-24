@@ -41,7 +41,7 @@ type ShellContextValue = {
   motionReady: boolean;
   motionGeneration: number;
   navigate: (href: string) => void;
-  curtainRef: React.RefObject<HTMLDivElement | null>;
+  curtainPanelRef: React.RefObject<HTMLDivElement | null>;
   curtainTextRef: React.RefObject<HTMLSpanElement | null>;
   navLogoRef: React.RefObject<HTMLAnchorElement | null>;
 };
@@ -64,7 +64,7 @@ export function ShellProvider({ children, introDone }: { children: ReactNode; in
   const [motionReady, setMotionReady] = useState(false);
   const [motionGeneration, setMotionGeneration] = useState(0);
 
-  const curtainRef = useRef<HTMLDivElement>(null);
+  const curtainPanelRef = useRef<HTMLDivElement>(null);
   const curtainTextRef = useRef<HTMLSpanElement>(null);
   const navLogoRef = useRef<HTMLAnchorElement>(null);
   const busyRef = useRef(false);
@@ -104,29 +104,39 @@ export function ShellProvider({ children, introDone }: { children: ReactNode; in
 
   const runCurtain = useCallback(
     (label: string, opts: { withRise: boolean }) => {
-      const cur = curtainRef.current;
+      const cpan = curtainPanelRef.current;
       const curt = curtainTextRef.current;
-      if (!cur || !curt) return;
-      cur.style.visibility = "visible";
+      if (!cpan || !curt) return;
+      // Cancel whatever's still in flight from a previous cycle before
+      // starting a new one -- a defensive reset, not something that
+      // should normally fire since busyRef already blocks re-entry, but
+      // cheap insurance against the two ever overlapping.
+      [cpan, curt].forEach((e) => e.getAnimations().forEach((a) => a.cancel()));
       curt.textContent = label;
       curt.style.opacity = "0";
 
       const rise = () =>
         new Promise<void>((resolve) => {
           if (!opts.withRise) {
-            cur.style.clipPath = "inset(0 0 0 0)";
+            cpan.style.transform = "none";
             resolve();
             return;
           }
-          const anim = cur.animate(
-            [{ clipPath: "inset(100% 0 0 0)" }, { clipPath: "inset(0 0 0 0)" }],
+          const anim = cpan.animate(
+            [{ transform: "translateY(100%)" }, { transform: "none" }],
             { duration: 600, easing: EASE_IN_OUT, fill: "forwards" }
           );
           anim.onfinish = () => resolve();
         });
 
       rise().then(() => {
-        swapEffects();
+        // The label's entrance animation is registered first, and
+        // swapEffects (scroll reset, focus, the menu/case/motion state
+        // updates that ripple into a React re-render across the tree)
+        // only runs 40ms later -- doing that heavier work in the same
+        // tick as kicking off this animation risked dropping its first
+        // frame, which showed up as a stutter right as the curtain
+        // finished covering the screen.
         curt.animate(
           [
             { opacity: 0, transform: "translateY(24px)" },
@@ -134,14 +144,17 @@ export function ShellProvider({ children, introDone }: { children: ReactNode; in
           ],
           { duration: 500, easing: EASE, fill: "forwards" }
         );
+        setTimeout(swapEffects, 40);
         setTimeout(() => {
           curt.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 250, fill: "forwards" });
-          cur.animate(
-            [{ clipPath: "inset(0 0 0 0)" }, { clipPath: "inset(0 0 100% 0)" }],
+          cpan.animate(
+            [{ transform: "none" }, { transform: "translateY(-100%)" }],
             { duration: 750, easing: EASE_IN_OUT, fill: "forwards" }
           );
           setTimeout(() => {
-            cur.style.visibility = "hidden";
+            cpan.getAnimations().forEach((a) => a.cancel());
+            curt.getAnimations().forEach((a) => a.cancel());
+            curt.style.opacity = "0";
             busyRef.current = false;
             const next = pendingRef.current;
             pendingRef.current = null;
@@ -224,7 +237,7 @@ export function ShellProvider({ children, introDone }: { children: ReactNode; in
       motionReady,
       motionGeneration,
       navigate,
-      curtainRef,
+      curtainPanelRef,
       curtainTextRef,
       navLogoRef,
     }),
