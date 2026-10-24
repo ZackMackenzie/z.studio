@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
+import { usePathname } from "next/navigation";
 import { LangProvider } from "@/lib/i18n";
 import { ShellProvider } from "@/lib/shell-state";
 import { Intro } from "@/components/shell/Intro";
@@ -12,6 +13,12 @@ import { CaseOverlay } from "@/components/shell/CaseOverlay";
 
 export function ClientShell({ children }: { children: ReactNode }) {
   const [introDone, setIntroDone] = useState(false);
+  const pathname = usePathname();
+  // About's own section already sizes itself (manifesto + bio + sticky
+  // portrait); forcing the shared floor here on top of that left a tall
+  // black gap between its white panel and the footer on tall viewports.
+  // Contact and Terms are short pages that still need the floor.
+  const isAbout = pathname.startsWith("/about");
 
   return (
     <LangProvider>
@@ -21,7 +28,7 @@ export function ClientShell({ children }: { children: ReactNode }) {
         <Menu />
         <Curtain />
         <CaseOverlay />
-        <main id="top" tabIndex={-1} style={{ minHeight: "calc(100svh - 120px)", outline: "none" }}>
+        <main id="top" tabIndex={-1} style={{ minHeight: isAbout ? 0 : "calc(100svh - 120px)", outline: "none" }}>
           {children}
         </main>
         <Footer />
